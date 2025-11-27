@@ -1,67 +1,64 @@
-# Delivery service
+# Backend (Django)
 
-## Installation
+Django REST API для служби доставки.
 
-### Prerequisites
+## Встановлення
 
-- Python (3.12) / pip
-- NodeJS (20.12.2) / npm
-- Docker / docker-compose
+### Вимоги
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/Nemerzh/delivery_service_course_work.git delivery_service
-cd delivery_service
-```
+- Python 3.12
+- pip
+- Docker та docker-compose
 
-### 2. Set up virtual environment (optional but recommended)
+### 1. Створіть віртуальне середовище
+
 ```bash
 python -m venv venv
 ```
-on unix based systems
-```bash
-source venv/bin/activate
-```
-on windows
+
+На Windows:
 ```bash
 venv\Scripts\activate
 ```
 
-### 3. Install dependencies
+На Unix системах:
+```bash
+source venv/bin/activate
+```
+
+### 2. Встановіть залежності
+
 ```bash
 pip install -r requirements.txt
 ```
 
+### 3. Налаштуйте змінні оточення
 
-### 4. Set up environment variables
-Create a `.env` file from `.env.dist` and replace secret variables with your own values
+Створіть файл `.env` з `.env.dist` та замініть секретні змінні на свої значення.
 
-### 5. Run docker-compose
-run the command
+### 4. Запустіть Docker Compose
+
+З кореневої директорії проекту:
 ```bash
 docker-compose up -d
 ```
 
+### 5. Застосуйте міграції бази даних
 
-### 6. Run database migrations
-```shell
+```bash
 python manage.py migrate
 ```
 
+### 6. Запустіть сервер розробки
 
-### 7. Run the server
-```shell
+```bash
 python manage.py runserver
 ```
-check console output
-if everything is ok go to the frontend part
-### 8. Setup frontend
-```shell
-cd frontend
-npm i
-npm run dev
-```
 
+Сервер буде доступний за адресою `http://localhost:8000`
 
+## API
 
+API доступне за адресою `http://localhost:8000/api/`
 
+Для Android емулятора використовуйте: `http://10.0.2.2:8000/api/`

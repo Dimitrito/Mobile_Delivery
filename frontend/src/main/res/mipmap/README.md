@@ -1,9 +1,7 @@
-# Иконки приложения
+# Іконки додатку
 
-Здесь должны быть размещены иконки приложения:
-- `ic_launcher.png` и `ic_launcher_round.png` в различных разрешениях (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi)
+Тут мають бути розміщені іконки додатку:
+- `ic_launcher.png` та `ic_launcher_round.png` у різних роздільностях (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi)
 
-Android Studio может автоматически сгенерировать иконки через:
+Android Studio може автоматично згенерувати іконки через:
 Tools → Image Asset → Launcher Icons
-
-

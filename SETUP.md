@@ -1,46 +1,40 @@
-# Инструкция по настройке проекта
+# Інструкція з налаштування проекту
 
-## Шаг 1: Настройка бэкенда
+## Клонування репозиторію
 
-1. Скопируйте содержимое репозитория [delivery_service](https://github.com/Dimitrito/delivery_service) в директорию `backend/`
+Якщо ви ще не клонували проект, виконайте:
 
-   Вы можете сделать это одним из способов:
-   
-   **Вариант A: Через git (рекомендуется)**
-   ```bash
-   cd backend
-   git clone https://github.com/Dimitrito/delivery_service.git temp
-   xcopy temp\* . /E /I /Y
-   rmdir /S /Q temp
-   cd ..
-   ```
-   
-   **Вариант B: Вручную**
-   - Скачайте репозиторий как ZIP
-   - Распакуйте содержимое в директорию `backend/`
+```bash
+git clone <URL_ВАШОГО_РЕПОЗИТОРІЮ> Mobile_Delivery
+cd Mobile_Delivery
+```
 
-2. Настройте виртуальное окружение и зависимости (см. `backend/README.md`)
+## Крок 1: Налаштування бекенду
 
-## Шаг 2: Настройка Gradle Wrapper
+1. Бекенд вже скопійовано в директорію `backend/`
 
-Gradle Wrapper требует файл `gradle/wrapper/gradle-wrapper.jar`. 
+2. Налаштуйте віртуальне середовище та залежності (див. `backend/README.md`)
 
-**Вариант A: Через Android Studio (рекомендуется)**
-1. Откройте проект в Android Studio
-2. Android Studio автоматически предложит скачать Gradle Wrapper
-3. Или: File → Settings → Build, Execution, Deployment → Build Tools → Gradle → Use Gradle from: 'gradle-wrapper.properties' file
+## Крок 2: Налаштування Gradle Wrapper
 
-**Вариант B: Через командную строку**
-Если у вас установлен Gradle:
+Gradle Wrapper потребує файл `gradle/wrapper/gradle-wrapper.jar`. 
+
+**Варіант A: Через Android Studio (рекомендовано)**
+1. Відкрийте проект в Android Studio
+2. Android Studio автоматично запропонує завантажити Gradle Wrapper
+3. Або: File → Settings → Build, Execution, Deployment → Build Tools → Gradle → Use Gradle from: 'gradle-wrapper.properties' file
+
+**Варіант B: Через командний рядок**
+Якщо у вас встановлено Gradle:
 ```bash
 gradle wrapper --gradle-version 8.4
 ```
 
-**Вариант C: Скачать вручную**
-1. Скачайте `gradle-wrapper.jar` с https://github.com/gradle/gradle/releases
-2. Поместите его в `gradle/wrapper/gradle-wrapper.jar`
+**Варіант C: Завантажити вручну**
+1. Завантажте `gradle-wrapper.jar` з https://github.com/gradle/gradle/releases
+2. Помістіть його в `gradle/wrapper/gradle-wrapper.jar`
 
-## Шаг 3: Запуск проекта
+## Крок 3: Запуск проекту
 
 ### Backend
 ```bash
@@ -48,34 +42,35 @@ cd backend
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
+cd ..
 docker-compose up -d
+cd backend
 python manage.py migrate
 python manage.py runserver
 ```
 
 ### Frontend
 
-1. Установите Android Studio и Android SDK
-2. Откройте проект в Android Studio
-3. Дождитесь синхронизации Gradle
-4. Подключите Android устройство или запустите эмулятор
-5. Запустите приложение через Android Studio (кнопка Run) или:
+1. Встановіть Android Studio та Android SDK
+2. Відкрийте проект в Android Studio
+3. Дочекайтеся синхронізації Gradle
+4. Підключіть Android пристрій або запустіть емулятор
+5. Запустіть додаток через Android Studio (кнопка Run) або:
    ```bash
-   # Установка на устройство/эмулятор
+   # Встановлення на пристрій/емулятор
    .\gradlew.bat :frontend:installDebug  # Windows
    ./gradlew :frontend:installDebug      # Linux/Mac
    ```
 
-**Важно для работы с локальным бэкендом:**
-- На эмуляторе используйте адрес `http://10.0.2.2:8000/api/` (это localhost хоста)
-- На реальном устройстве используйте IP адрес вашего компьютера в локальной сети
-- Убедитесь, что бэкенд разрешает подключения с вашего устройства (настройте ALLOWED_HOSTS в Django)
+**Важливо для роботи з локальним бекендом:**
+- На емуляторі використовуйте адресу `http://10.0.2.2:8000/api/` (це localhost хоста)
+- На реальному пристрої використовуйте IP адресу вашого комп'ютера в локальній мережі
+- Переконайтеся, що бекенд дозволяє підключення з вашого пристрою (налаштуйте ALLOWED_HOSTS в Django)
 
-## Требования
+## Вимоги
 
-- JDK 17 или выше
+- JDK 17 або вище
 - Python 3.12
-- Docker и docker-compose
+- Docker та docker-compose
 - Android Studio
 - Android SDK (Platform 34, Build-Tools)
-
