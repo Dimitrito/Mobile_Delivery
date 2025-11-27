@@ -1,4 +1,4 @@
-package com.mobiledelivery.frontend.api
+package com.mobiledelivery.data.api
 
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
@@ -25,3 +25,4 @@ object ApiClient {
     
     fun getBaseUrl(): String = BASE_URL
 }
+

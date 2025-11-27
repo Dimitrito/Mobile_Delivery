@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.mobiledelivery.frontend"
+    namespace = "com.mobiledelivery"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.mobiledelivery.frontend"
+        applicationId = "com.mobiledelivery"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
