@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+*.log
+*.pot
+*.pyc
+*.swp
+*.swo
+media
+staticfiles
+
+# Ignore environment file
+.env
+
+.venv
+
+# Ignore IDE specific files
+.idea/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Dependency directories
+frontend/node_modules/
+
+# Production build
+frontend/static/frontend/
+dist/
+
+# Cache and logs
+.cache/
+logs/
+
+# Docker
+data
+
