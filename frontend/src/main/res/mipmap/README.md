@@ -6,3 +6,4 @@
 Android Studio может автоматически сгенерировать иконки через:
 Tools → Image Asset → Launcher Icons
 
+
