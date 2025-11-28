@@ -23,11 +23,11 @@ class AuthViewModel(
 ) : ViewModel() {
     
     // Стани для логіну
-    private val _loginState = MutableStateFlow<UiState<User>>(UiState.Loading)
+    private val _loginState = MutableStateFlow<UiState<User>>(UiState.Idle)
     val loginState: StateFlow<UiState<User>> = _loginState.asStateFlow()
     
     // Стани для реєстрації
-    private val _registerState = MutableStateFlow<UiState<Unit>>(UiState.Loading)
+    private val _registerState = MutableStateFlow<UiState<Unit>>(UiState.Idle)
     val registerState: StateFlow<UiState<Unit>> = _registerState.asStateFlow()
     
     // Стани для поточного користувача

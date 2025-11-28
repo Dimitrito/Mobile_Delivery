@@ -90,6 +90,9 @@ fun HomeScreen(
         ) {
             // Категорії
             when (val state = categoriesState) {
+                is UiState.Idle -> {
+                    // Початковий стан - нічого не показуємо
+                }
                 is UiState.Loading -> {
                     Box(
                         modifier = Modifier
@@ -139,6 +142,9 @@ fun HomeScreen(
             
             // Страви
             when (val state = dishesState) {
+                is UiState.Idle -> {
+                    // Початковий стан - нічого не показуємо
+                }
                 is UiState.Loading -> {
                     Box(
                         modifier = Modifier
