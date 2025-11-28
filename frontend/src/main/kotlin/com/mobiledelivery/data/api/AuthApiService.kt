@@ -12,8 +12,9 @@ import io.ktor.client.*
  */
 class AuthApiService(
     client: HttpClient,
-    baseUrl: String
-) : DeliveryApiService(client, baseUrl) {
+    baseUrl: String,
+    tokenProvider: (() -> String?)? = null
+) : DeliveryApiService(client, baseUrl, tokenProvider) {
     
     /**
      * Виконує логін користувача

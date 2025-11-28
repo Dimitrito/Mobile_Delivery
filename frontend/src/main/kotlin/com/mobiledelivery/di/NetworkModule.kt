@@ -22,12 +22,9 @@ object NetworkModule {
      * @param tokenManager Менеджер токенів (опціонально)
      */
     fun createAuthApiService(tokenManager: TokenManager? = null): AuthApiService {
-        val client = if (tokenManager != null) {
-            ApiClient.createClient(tokenManager)
-        } else {
-            ApiClient.client
-        }
-        return AuthApiService(client, baseUrl)
+        val client = ApiClient.client
+        val tokenProvider: (() -> String?)? = tokenManager?.let { { it.getToken() } }
+        return AuthApiService(client, baseUrl, tokenProvider)
     }
     
     /**
@@ -35,12 +32,9 @@ object NetworkModule {
      * @param tokenManager Менеджер токенів (обов'язково для автентифікованих запитів)
      */
     fun createRestaurantApiService(tokenManager: TokenManager? = null): RestaurantApiService {
-        val client = if (tokenManager != null) {
-            ApiClient.createClient(tokenManager)
-        } else {
-            ApiClient.client
-        }
-        return RestaurantApiService(client, baseUrl)
+        val client = ApiClient.client
+        val tokenProvider: (() -> String?)? = tokenManager?.let { { it.getToken() } }
+        return RestaurantApiService(client, baseUrl, tokenProvider)
     }
     
     /**

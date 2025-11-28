@@ -6,8 +6,8 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.SerializationException
 
 /**
@@ -16,15 +16,33 @@ import kotlinx.serialization.SerializationException
  */
 abstract class DeliveryApiService(
     protected val client: HttpClient,
-    protected val baseUrl: String
+    protected val baseUrl: String,
+    protected val tokenProvider: (() -> String?)? = null
 ) {
+    
+    /**
+     * Додає стандартні заголовки до запиту
+     */
+    private fun HttpRequestBuilder.addDefaultHeaders() {
+        headers {
+            append(HttpHeaders.ContentType, ContentType.Application.Json)
+            append(HttpHeaders.Accept, ContentType.Application.Json)
+            
+            // Додавання токену автентифікації, якщо він є
+            tokenProvider?.invoke()?.let { token ->
+                append(HttpHeaders.Authorization, "Bearer $token")
+            }
+        }
+    }
     
     /**
      * Виконує GET запит
      */
     suspend inline fun <reified T> get(endpoint: String): ApiResponse<T> {
         return try {
-            val response = client.get("$baseUrl$endpoint")
+            val response = client.get("$baseUrl$endpoint") {
+                addDefaultHeaders()
+            }
             if (response.status.isSuccess()) {
                 ApiResponse.Success(response.body<T>())
             } else {
@@ -44,7 +62,7 @@ abstract class DeliveryApiService(
     ): ApiResponse<T> {
         return try {
             val response = client.post("$baseUrl$endpoint") {
-                contentType(ContentType.Application.Json)
+                addDefaultHeaders()
                 setBody(body)
             }
             if (response.status.isSuccess()) {
@@ -66,7 +84,7 @@ abstract class DeliveryApiService(
     ): ApiResponse<T> {
         return try {
             val response = client.put("$baseUrl$endpoint") {
-                contentType(ContentType.Application.Json)
+                addDefaultHeaders()
                 setBody(body)
             }
             if (response.status.isSuccess()) {
@@ -84,7 +102,9 @@ abstract class DeliveryApiService(
      */
     suspend fun delete(endpoint: String): ApiResponse<Unit> {
         return try {
-            val response = client.delete("$baseUrl$endpoint")
+            val response = client.delete("$baseUrl$endpoint") {
+                addDefaultHeaders()
+            }
             if (response.status.isSuccess()) {
                 ApiResponse.Success(Unit)
             } else {
@@ -98,7 +118,7 @@ abstract class DeliveryApiService(
     /**
      * Обробка помилок HTTP відповіді
      */
-    private suspend inline fun <reified T> handleError(response: HttpResponse): ApiResponse<T> {
+    private suspend fun <T> handleError(response: HttpResponse): ApiResponse<T> {
         return try {
             val errorBody = response.body<ApiError>()
             ApiResponse.Error(

@@ -4,7 +4,6 @@ import com.mobiledelivery.data.shared.TokenManager
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.defaultrequest.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -36,18 +35,6 @@ object ApiClient {
             // Логування HTTP запитів
             install(Logging) {
                 level = LogLevel.INFO
-            }
-            
-            // Налаштування базового URL та заголовків
-            install(DefaultRequest) {
-                url(BASE_URL)
-                header(HttpHeaders.ContentType, ContentType.Application.Json)
-                header(HttpHeaders.Accept, ContentType.Application.Json)
-                
-                // Додавання токену автентифікації, якщо він є
-                tokenManager?.getToken()?.let { token ->
-                    header(HttpHeaders.Authorization, "Bearer $token")
-                }
             }
             
             // Обробка помилок

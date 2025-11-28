@@ -9,8 +9,9 @@ import io.ktor.client.*
  */
 class RestaurantApiService(
     client: HttpClient,
-    baseUrl: String
-) : DeliveryApiService(client, baseUrl) {
+    baseUrl: String,
+    tokenProvider: (() -> String?)? = null
+) : DeliveryApiService(client, baseUrl, tokenProvider) {
     
     /**
      * Отримує список категорій
