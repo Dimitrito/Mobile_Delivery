@@ -15,15 +15,15 @@ import kotlinx.serialization.SerializationException
  * Надає методи для виконання HTTP запитів з обробкою помилок
  */
 abstract class DeliveryApiService(
-    protected val client: HttpClient,
-    protected val baseUrl: String,
-    protected val tokenProvider: (() -> String?)? = null
+    val client: HttpClient,
+    val baseUrl: String,
+    internal val tokenProvider: (() -> String?)? = null
 ) {
     
     /**
      * Додає стандартні заголовки до запиту
      */
-    private fun HttpRequestBuilder.addDefaultHeaders() {
+    fun HttpRequestBuilder.addDefaultHeaders() {
         headers {
             append(HttpHeaders.ContentType, ContentType.Application.Json)
             append(HttpHeaders.Accept, ContentType.Application.Json)
@@ -118,7 +118,7 @@ abstract class DeliveryApiService(
     /**
      * Обробка помилок HTTP відповіді
      */
-    private suspend fun <T> handleError(response: HttpResponse): ApiResponse<T> {
+    suspend fun <T> handleError(response: HttpResponse): ApiResponse<T> {
         return try {
             val errorBody = response.body<ApiError>()
             ApiResponse.Error(
@@ -137,7 +137,7 @@ abstract class DeliveryApiService(
     /**
      * Обробка винятків під час виконання запиту
      */
-    private fun <T> handleException(e: Exception): ApiResponse<T> {
+    fun <T> handleException(e: Exception): ApiResponse<T> {
         return when (e) {
             is ClientRequestException -> {
                 ApiResponse.Error(

@@ -7,8 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
 import com.mobiledelivery.di.AppModule
-import com.mobiledelivery.presentation.screens.home.HomeScreen
+import com.mobiledelivery.presentation.navigation.AppNavigation
 import com.mobiledelivery.presentation.theme.MobileDeliveryTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,7 +25,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    HomeScreen()
+                    val navController = rememberNavController()
+                    AppNavigation(navController = navController)
                 }
             }
         }

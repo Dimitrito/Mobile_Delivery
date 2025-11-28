@@ -1,7 +1,8 @@
 package com.mobiledelivery.data.api
 
 import com.mobiledelivery.data.api.models.ApiResponse
-import com.mobiledelivery.domain.models.Restaurant
+import com.mobiledelivery.data.api.models.CategoryResponse
+import com.mobiledelivery.data.api.models.DishResponse
 import io.ktor.client.*
 
 /**
@@ -16,7 +17,7 @@ class RestaurantApiService(
     /**
      * Отримує список категорій
      */
-    suspend fun getCategories(): ApiResponse<List<Any>> {
+    suspend fun getCategories(): ApiResponse<List<CategoryResponse>> {
         return get("category")
     }
     
@@ -24,7 +25,7 @@ class RestaurantApiService(
      * Отримує страви за категорією
      * @param categoryId ID категорії
      */
-    suspend fun getDishesByCategory(categoryId: Int): ApiResponse<List<Any>> {
+    suspend fun getDishesByCategory(categoryId: Int): ApiResponse<List<DishResponse>> {
         return get("categorydish/$categoryId")
     }
 }

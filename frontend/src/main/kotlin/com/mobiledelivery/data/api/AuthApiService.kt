@@ -71,5 +71,13 @@ class AuthApiService(
     suspend fun refreshToken(): ApiResponse<AuthResponse> {
         return post("refresh-token", mapOf<String, String>())
     }
+    
+    /**
+     * Отримує інформацію про поточного користувача
+     * @return ApiResponse з інформацією про користувача
+     */
+    suspend inline fun <reified T> getCurrentUser(): ApiResponse<T> {
+        return get("user")
+    }
 }
 
