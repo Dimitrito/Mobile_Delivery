@@ -36,12 +36,40 @@ abstract class DeliveryApiService(
     }
     
     /**
+     * Додає заголовки без авторизації (для публічних endpoints)
+     */
+    fun HttpRequestBuilder.addPublicHeaders() {
+        headers {
+            append(HttpHeaders.ContentType, ContentType.Application.Json)
+            append(HttpHeaders.Accept, ContentType.Application.Json)
+        }
+    }
+    
+    /**
      * Виконує GET запит
      */
     suspend inline fun <reified T> get(endpoint: String): ApiResponse<T> {
         return try {
             val response = client.get("$baseUrl$endpoint") {
                 addDefaultHeaders()
+            }
+            if (response.status.isSuccess()) {
+                ApiResponse.Success(response.body<T>())
+            } else {
+                handleError(response)
+            }
+        } catch (e: Exception) {
+            handleException(e)
+        }
+    }
+    
+    /**
+     * Виконує GET запит без авторизації (для публічних endpoints)
+     */
+    suspend inline fun <reified T> getPublic(endpoint: String): ApiResponse<T> {
+        return try {
+            val response = client.get("$baseUrl$endpoint") {
+                addPublicHeaders()
             }
             if (response.status.isSuccess()) {
                 ApiResponse.Success(response.body<T>())
@@ -63,6 +91,28 @@ abstract class DeliveryApiService(
         return try {
             val response = client.post("$baseUrl$endpoint") {
                 addDefaultHeaders()
+                setBody(body)
+            }
+            if (response.status.isSuccess()) {
+                ApiResponse.Success(response.body<T>())
+            } else {
+                handleError(response)
+            }
+        } catch (e: Exception) {
+            handleException(e)
+        }
+    }
+    
+    /**
+     * Виконує POST запит без авторизації (для публічних endpoints)
+     */
+    suspend inline fun <reified T> postPublic(
+        endpoint: String, 
+        body: Any
+    ): ApiResponse<T> {
+        return try {
+            val response = client.post("$baseUrl$endpoint") {
+                addPublicHeaders()
                 setBody(body)
             }
             if (response.status.isSuccess()) {

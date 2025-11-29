@@ -1,33 +1,39 @@
 package com.mobiledelivery.presentation.screens.cart
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.RemoveCircle
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material3.ExperimentalMaterial3Api
+import com.mobiledelivery.domain.models.CartItem
 import com.mobiledelivery.presentation.states.UiState
 import com.mobiledelivery.presentation.viewmodels.AuthViewModel
 import com.mobiledelivery.presentation.viewmodels.CartViewModel
+
+// Кольори
+private val OrangeAccent = Color(0xFFFF6B35)
+private val GreenAccent = Color(0xFF4CAF50)
+private val BackgroundColor = Color(0xFFFAF8F5)
+private val CardBackground = Color.White
+private val DarkText = Color(0xFF1A1A1A)
+private val GrayText = Color(0xFF9E9E9E)
+private val LightBorder = Color(0xFFE8E6E3)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +49,8 @@ fun CartScreen(
     
     var showSuccessDialog by remember { mutableStateOf(false) }
     var deliveryAddress by remember { mutableStateOf("") }
+    var isDelivery by remember { mutableStateOf(true) }
+    var isCashPayment by remember { mutableStateOf(true) }
     
     // Обробка стану замовлення
     LaunchedEffect(orderState) {
@@ -66,19 +74,31 @@ fun CartScreen(
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = GreenAccent,
                     modifier = Modifier.size(48.dp)
                 )
             },
-            title = { Text("Замовлення створено!") },
-            text = { Text("Ваше замовлення успішно оформлено. Очікуйте на доставку.") },
+            title = { 
+                Text(
+                    "Order placed!",
+                    fontWeight = FontWeight.Bold
+                ) 
+            },
+            text = { 
+                Text(
+                    "Your order has been successfully placed. Wait for delivery.",
+                    textAlign = TextAlign.Center
+                ) 
+            },
             confirmButton = {
                 Button(
                     onClick = {
                         showSuccessDialog = false
                         cartViewModel.resetOrderState()
                         onOrderPlaced()
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent),
+                    shape = RoundedCornerShape(24.dp)
                 ) {
                     Text("OK")
                 }
@@ -86,147 +106,309 @@ fun CartScreen(
         )
     }
     
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Кошик") },
-                navigationIcon = {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundColor)
+    ) {
+        if (cart.isEmpty) {
+            // Empty Cart
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = null,
+                    modifier = Modifier.size(80.dp),
+                    tint = GrayText
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Your cart is empty",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Add dishes to your cart",
+                    fontSize = 14.sp,
+                    color = GrayText
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                TextButton(onClick = onNavigateBack) {
+                    Text(
+                        text = "Back to menu",
+                        color = OrangeAccent,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(CardBackground)
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Назад"
+                            contentDescription = "Back",
+                            tint = DarkText
+                        )
+                    }
+                    Text(
+                        text = "Checkout",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
+                    )
+                    IconButton(onClick = { }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = "Notifications",
+                            tint = OrangeAccent
                         )
                     }
                 }
-            )
-        },
-        bottomBar = {
-            if (!cart.isEmpty) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        // Поле для адреси доставки
-                        OutlinedTextField(
-                            value = deliveryAddress,
-                            onValueChange = { deliveryAddress = it },
-                            label = { Text("Адреса доставки") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                    // Delivery Method
+                    item {
+                        Text(
+                            text = "Delivery method",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DarkText
                         )
-                        
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            DeliveryMethodButton(
+                                text = "Delivery",
+                                isSelected = isDelivery,
+                                onClick = { isDelivery = true },
+                                modifier = Modifier.weight(1f)
+                            )
+                            DeliveryMethodButton(
+                                text = "Pickup",
+                                isSelected = !isDelivery,
+                                onClick = { isDelivery = false },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                    
+                    // Address
+                    if (isDelivery) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Address",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DarkText
+                                )
+                                TextButton(onClick = { }) {
+                                    Text(
+                                        text = "Edit",
+                                        color = OrangeAccent,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                            OutlinedTextField(
+                                value = deliveryAddress,
+                                onValueChange = { deliveryAddress = it },
+                                placeholder = { Text("Enter delivery address", color = GrayText) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = CardBackground,
+                                    unfocusedContainerColor = CardBackground,
+                                    focusedBorderColor = OrangeAccent,
+                                    unfocusedBorderColor = LightBorder
+                                ),
+                                singleLine = true
+                            )
+                        }
+                    }
+                    
+                    // Payment Method
+                    item {
+                        Text(
+                            text = "Payment method",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DarkText
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Загальна сума:",
-                                style = MaterialTheme.typography.titleMedium
+                                text = if (isCashPayment) "Cash" else "Card",
+                                fontSize = 14.sp,
+                                color = DarkText
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Card",
+                                    fontSize = 12.sp,
+                                    color = if (!isCashPayment) OrangeAccent else GrayText
+                                )
+                                Switch(
+                                    checked = isCashPayment,
+                                    onCheckedChange = { isCashPayment = it },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = GreenAccent,
+                                        uncheckedThumbColor = Color.White,
+                                        uncheckedTrackColor = GrayText
+                                    )
+                                )
+                                Text(
+                                    text = "Cash",
+                                    fontSize = 12.sp,
+                                    color = if (isCashPayment) GreenAccent else GrayText
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Divider
+                    item {
+                        Divider(color = LightBorder)
+                    }
+                    
+                    // Cart Items
+                    items(cart.items, key = { it.menuItem.id }) { cartItem ->
+                        CartItemRow(
+                            cartItem = cartItem,
+                            onIncreaseQuantity = { cartViewModel.addItem(cartItem.menuItem) },
+                            onDecreaseQuantity = {
+                                cartViewModel.updateItemQuantity(cartItem.menuItem.id, cartItem.quantity - 1)
+                            }
+                        )
+                    }
+                    
+                    // Order Summary
+                    item {
+                        Divider(color = LightBorder)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Order summary",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DarkText
                             )
                             Text(
                                 text = "${String.format("%.2f", cart.totalPrice)} ₴",
-                                style = MaterialTheme.typography.headlineSmall,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = OrangeAccent
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Помилка замовлення
-                        if (orderState is UiState.Error) {
+                    }
+                    
+                    // Error message
+                    if (orderState is UiState.Error) {
+                        item {
                             Text(
                                 text = (orderState as UiState.Error).message,
                                 color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(bottom = 8.dp)
+                                fontSize = 14.sp,
+                                modifier = Modifier.fillMaxWidth()
                             )
-                        }
-                        
-                        Button(
-                            onClick = {
-                                currentUser?.let { user ->
-                                    cartViewModel.placeOrder(user.id, deliveryAddress)
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = orderState !is UiState.Loading && currentUser != null
-                        ) {
-                            if (orderState is UiState.Loading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
-                            Text(if (orderState is UiState.Loading) "Оформлення..." else "Оформити замовлення")
                         }
                     }
                 }
-            }
-        }
-    ) { paddingValues ->
-        if (cart.isEmpty) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
+                
+                // Bottom Section
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(CardBackground)
+                        .padding(16.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Кошик порожній",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text(
-                        text = "Додайте страви до кошика",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = cart.items,
-                    key = { it.menuItem.id }
-                ) { cartItem ->
-                    CartItemCard(
-                        cartItem = cartItem,
-                        onIncreaseQuantity = {
-                            cartViewModel.addItem(cartItem.menuItem)
+                    // Place Order Button
+                    Button(
+                        onClick = {
+                            currentUser?.let { user ->
+                                cartViewModel.placeOrder(user.id, deliveryAddress)
+                            }
                         },
-                        onDecreaseQuantity = {
-                            cartViewModel.updateItemQuantity(
-                                cartItem.menuItem.id,
-                                cartItem.quantity - 1
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(28.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = OrangeAccent,
+                            disabledContainerColor = OrangeAccent.copy(alpha = 0.5f)
+                        ),
+                        enabled = orderState !is UiState.Loading && currentUser != null
+                    ) {
+                        if (orderState is UiState.Loading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
                             )
-                        },
-                        onRemove = {
-                            cartViewModel.removeItem(cartItem.menuItem.id)
+                        } else {
+                            Text(
+                                text = "Place order",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
                         }
-                    )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Back to cart link
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        TextButton(onClick = onNavigateBack) {
+                            Text(
+                                text = "Back to cart",
+                                color = OrangeAccent,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -234,94 +416,128 @@ fun CartScreen(
 }
 
 @Composable
-fun CartItemCard(
-    cartItem: com.mobiledelivery.domain.models.CartItem,
-    onIncreaseQuantity: () -> Unit,
-    onDecreaseQuantity: () -> Unit,
-    onRemove: () -> Unit
+private fun DeliveryMethodButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isSelected) OrangeAccent.copy(alpha = 0.1f) else CardBackground)
+            .border(
+                width = 1.dp,
+                color = if (isSelected) OrangeAccent else LightBorder,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Column(
-                modifier = Modifier.weight(1f)
+            Text(
+                text = text,
+                color = if (isSelected) OrangeAccent else GrayText,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+            )
+            if (isSelected) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = OrangeAccent,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CartItemRow(
+    cartItem: CartItem,
+    onIncreaseQuantity: () -> Unit,
+    onDecreaseQuantity: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(CardBackground, RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Item info
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = cartItem.menuItem.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = DarkText
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "${String.format("%.2f", cartItem.menuItem.price)} ₴",
+                fontSize = 14.sp,
+                color = GrayText
+            )
+        }
+        
+        // Quantity controls
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            IconButton(
+                onClick = onDecreaseQuantity,
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(LightBorder, RoundedCornerShape(8.dp))
             ) {
-                Text(
-                    text = cartItem.menuItem.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "${String.format("%.2f", cartItem.menuItem.price)} ₴",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Сума: ${String.format("%.2f", cartItem.totalPrice)} ₴",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    imageVector = Icons.Default.Remove,
+                    contentDescription = "Decrease",
+                    tint = DarkText,
+                    modifier = Modifier.size(16.dp)
                 )
             }
             
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Text(
+                text = "${cartItem.quantity}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = DarkText,
+                modifier = Modifier.width(24.dp),
+                textAlign = TextAlign.Center
+            )
+            
+            IconButton(
+                onClick = onIncreaseQuantity,
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(OrangeAccent, RoundedCornerShape(8.dp))
             ) {
-                // Кнопки управління кількістю
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            RoundedCornerShape(8.dp)
-                        )
-                        .padding(horizontal = 4.dp, vertical = 4.dp)
-                ) {
-                    IconButton(onClick = onDecreaseQuantity) {
-                        Icon(
-                            imageVector = Icons.Default.RemoveCircle,
-                            contentDescription = "Зменшити"
-                        )
-                    }
-                    Text(
-                        text = "${cartItem.quantity}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                    IconButton(onClick = onIncreaseQuantity) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Збільшити"
-                        )
-                    }
-                }
-                
-                // Кнопка видалення
-                IconButton(
-                    onClick = onRemove,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Видалити"
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Increase",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
+        
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        // Item total
+        Text(
+            text = "${String.format("%.2f", cartItem.totalPrice)} ₴",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = DarkText
+        )
     }
 }

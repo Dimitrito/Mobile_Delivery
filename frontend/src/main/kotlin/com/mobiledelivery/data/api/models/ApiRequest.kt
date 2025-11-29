@@ -30,3 +30,20 @@ data class RegisterRequest(
     val password2: String
 )
 
+/**
+ * Модель запиту для відновлення паролю
+ */
+@Serializable
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+/**
+ * Модель відповіді для відновлення паролю
+ */
+@Serializable
+data class ForgotPasswordResponse(
+    val message: String? = null,
+    val error: String? = null
+)
+

@@ -19,7 +19,8 @@ class AuthViewModel(
     private val registerUseCase: RegisterUseCase,
     private val logoutUseCase: LogoutUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val isAuthenticatedUseCase: IsAuthenticatedUseCase
+    private val isAuthenticatedUseCase: IsAuthenticatedUseCase,
+    private val forgotPasswordUseCase: ForgotPasswordUseCase? = null
 ) : ViewModel() {
     
     // Стани для логіну
@@ -29,6 +30,10 @@ class AuthViewModel(
     // Стани для реєстрації
     private val _registerState = MutableStateFlow<UiState<Unit>>(UiState.Idle)
     val registerState: StateFlow<UiState<Unit>> = _registerState.asStateFlow()
+    
+    // Стани для відновлення паролю
+    private val _forgotPasswordState = MutableStateFlow<UiState<String>>(UiState.Idle)
+    val forgotPasswordState: StateFlow<UiState<String>> = _forgotPasswordState.asStateFlow()
     
     // Стани для поточного користувача
     private val _currentUser = MutableStateFlow<User?>(null)
@@ -131,6 +136,35 @@ class AuthViewModel(
      */
     fun clearEvent() {
         _uiEvent.value = null
+    }
+    
+    /**
+     * Відновлення паролю
+     */
+    fun forgotPassword(email: String) {
+        val useCase = forgotPasswordUseCase
+        if (useCase == null) {
+            _forgotPasswordState.value = UiState.Error("Функція недоступна")
+            return
+        }
+        
+        viewModelScope.launch {
+            _forgotPasswordState.value = UiState.Loading
+            useCase(email)
+                .onSuccess { message ->
+                    _forgotPasswordState.value = UiState.Success(message)
+                }
+                .onFailure { exception ->
+                    _forgotPasswordState.value = UiState.Error(exception.message ?: "Помилка відновлення паролю")
+                }
+        }
+    }
+    
+    /**
+     * Скидає стан відновлення паролю
+     */
+    fun resetForgotPasswordState() {
+        _forgotPasswordState.value = UiState.Idle
     }
 }
 

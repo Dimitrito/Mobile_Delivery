@@ -153,5 +153,24 @@ class AuthRepository(
             }
         }
     }
+    
+    /**
+     * Відновлення паролю - надсилає новий пароль на email
+     * @param email Email користувача
+     * @return Result з повідомленням або помилкою
+     */
+    suspend fun forgotPassword(email: String): Result<String> {
+        return when (val response = authApiService.forgotPassword(email)) {
+            is ApiResponse.Success -> {
+                Result.success(response.data.message ?: "Новий пароль надіслано на вашу пошту")
+            }
+            is ApiResponse.Error -> {
+                Result.failure(Exception(response.message))
+            }
+            is ApiResponse.Loading -> {
+                Result.failure(Exception("Запит виконується"))
+            }
+        }
+    }
 }
 

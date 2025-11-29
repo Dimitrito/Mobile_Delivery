@@ -15,18 +15,18 @@ class RestaurantApiService(
 ) : DeliveryApiService(client, baseUrl, tokenProvider) {
     
     /**
-     * Отримує список категорій
+     * Отримує список категорій (публічний endpoint)
      */
     suspend fun getCategories(): ApiResponse<List<CategoryResponse>> {
-        return get("category")
+        return getPublic("category")
     }
     
     /**
-     * Отримує страви за категорією
+     * Отримує страви за категорією (публічний endpoint)
      * @param categoryId ID категорії
      */
     suspend fun getDishesByCategory(categoryId: Int): ApiResponse<List<DishResponse>> {
-        return get("categorydish/$categoryId")
+        return getPublic("categorydish/$categoryId")
     }
 }
 

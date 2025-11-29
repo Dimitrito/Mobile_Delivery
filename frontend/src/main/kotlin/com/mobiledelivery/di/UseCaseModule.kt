@@ -100,5 +100,15 @@ object UseCaseModule {
         val orderRepository = RepositoryModule.createOrderRepository(tokenManager)
         return PlaceOrderUseCase(orderRepository)
     }
+    
+    /**
+     * Створює ForgotPasswordUseCase
+     * @param tokenManager Менеджер токенів
+     * @return ForgotPasswordUseCase
+     */
+    fun createForgotPasswordUseCase(tokenManager: TokenManager): ForgotPasswordUseCase {
+        val authRepository = RepositoryModule.createAuthRepository(tokenManager)
+        return ForgotPasswordUseCase(authRepository)
+    }
 }
 

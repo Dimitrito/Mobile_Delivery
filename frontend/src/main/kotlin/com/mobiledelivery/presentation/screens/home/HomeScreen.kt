@@ -1,32 +1,56 @@
 package com.mobiledelivery.presentation.screens.home
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.RemoveCircle
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material3.ExperimentalMaterial3Api
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.size.Size
+import coil.transform.RoundedCornersTransformation
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
+import com.mobiledelivery.data.api.models.CategoryResponse
 import com.mobiledelivery.domain.models.MenuItem
 import com.mobiledelivery.presentation.states.UiState
 import com.mobiledelivery.presentation.viewmodels.AuthViewModel
 import com.mobiledelivery.presentation.viewmodels.CartViewModel
 import com.mobiledelivery.presentation.viewmodels.CategoriesViewModel
+
+// Кольори
+private val OrangeAccent = Color(0xFFFF6B35)
+private val OrangeLight = Color(0xFFFFE0B2)
+private val BackgroundColor = Color(0xFFFAF8F5)
+private val CardBackground = Color.White
+private val DarkText = Color(0xFF1A1A1A)
+private val GrayText = Color(0xFF9E9E9E)
+private val LightBorder = Color(0xFFE8E6E3)
+
+// Base URL для зображень (без /api/)
+private const val IMAGE_BASE_URL = "http://10.0.2.2:8000"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,58 +59,32 @@ fun HomeScreen(
     categoriesViewModel: CategoriesViewModel,
     cartViewModel: CartViewModel,
     onLogout: () -> Unit,
-    onNavigateToCart: () -> Unit
+    onNavigateToCart: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onNavigateToDishDetail: (Int) -> Unit = {}
 ) {
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val categoriesState by categoriesViewModel.categoriesState.collectAsStateWithLifecycle()
     val dishesState by categoriesViewModel.dishesState.collectAsStateWithLifecycle()
     val selectedCategoryId by categoriesViewModel.selectedCategoryId.collectAsStateWithLifecycle()
-    
     val cartState by cartViewModel.cart.collectAsStateWithLifecycle()
     
-    // Завантажуємо категорії коли екран відображається
+    var searchQuery by remember { mutableStateOf("") }
+    
     LaunchedEffect(Unit) {
         categoriesViewModel.initialize()
     }
     
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Column {
-                        Text("Mobile Delivery")
-                        currentUser?.let { user ->
-                            Text(
-                                text = "Привіт, ${user.firstName ?: user.email}!",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    TextButton(onClick = { authViewModel.logout(); onLogout() }) {
-                        Text("Вихід")
-                    }
-                }
+        containerColor = BackgroundColor,
+        bottomBar = {
+            BottomNavigationBar(
+                cartItemCount = cartState.itemCount,
+                onHomeClick = { },
+                onMenuClick = { },
+                onCartClick = onNavigateToCart,
+                onProfileClick = onNavigateToProfile
             )
-        },
-        floatingActionButton = {
-            if (cartState.itemCount > 0) {
-                FloatingActionButton(
-                    onClick = onNavigateToCart
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text("${cartState.itemCount}")
-                        Icon(
-                            imageVector = Icons.Default.ShoppingCart,
-                            contentDescription = "Кошик"
-                        )
-                    }
-                }
-            }
         }
     ) { paddingValues ->
         Column(
@@ -94,27 +92,111 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Категорії
-            when (val state = categoriesState) {
-                is UiState.Idle -> {
-                    // Початковий стан - нічого не показуємо
+            // Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(CardBackground)
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Mobile Delivery",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+                
+                IconButton(onClick = onNavigateToCart) {
+                    BadgedBox(
+                        badge = {
+                            if (cartState.itemCount > 0) {
+                                Badge(
+                                    containerColor = OrangeAccent
+                                ) {
+                                    Text("${cartState.itemCount}")
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.ShoppingCart,
+                            contentDescription = "Cart",
+                            tint = DarkText
+                        )
+                    }
                 }
+            }
+            
+            // Search Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(CardBackground)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search", color = GrayText) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = GrayText
+                        )
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = BackgroundColor,
+                        unfocusedContainerColor = BackgroundColor,
+                        focusedBorderColor = LightBorder,
+                        unfocusedBorderColor = LightBorder
+                    ),
+                    singleLine = true
+                )
+                
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(OrangeAccent)
+                        .clickable { onNavigateToCart() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = "Cart",
+                        tint = Color.White
+                    )
+                }
+            }
+            
+            // Categories
+            when (val state = categoriesState) {
                 is UiState.Loading -> {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(80.dp),
+                            .height(60.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = OrangeAccent)
                     }
                 }
                 is UiState.Success -> {
                     LazyRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            .background(CardBackground)
+                            .padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp)
                     ) {
                         items(state.data) { category ->
@@ -127,90 +209,391 @@ fun HomeScreen(
                     }
                 }
                 is UiState.Error -> {
-                    Card(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = state.message,
-                            modifier = Modifier.padding(16.dp),
-                            color = MaterialTheme.colorScheme.onErrorContainer
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+                else -> {}
+            }
+            
+            // Promo Banner
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(OrangeAccent, OrangeLight)
+                        )
+                    )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Free Delivery",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "On first order",
+                            fontSize = 16.sp,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = { },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = OrangeAccent
+                            ),
+                            shape = RoundedCornerShape(20.dp),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "Order now",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                    
+                    // Food icon placeholder
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Fastfood,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(48.dp)
                         )
                     }
                 }
             }
             
-            Divider()
-            
-            // Страви
-            when (val state = dishesState) {
-                is UiState.Idle -> {
-                    // Початковий стан - нічого не показуємо
+            // Popular Section Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Popular",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+                TextButton(onClick = { }) {
+                    Text(
+                        text = "For you",
+                        color = GrayText
+                    )
                 }
+            }
+            
+            // Dishes Grid
+            when (val state = dishesState) {
                 is UiState.Loading -> {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = OrangeAccent)
                     }
                 }
                 is UiState.Success -> {
                     if (state.data.isEmpty()) {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
+                            modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Немає страв у цій категорії",
-                                style = MaterialTheme.typography.bodyLarge
+                                text = "No dishes in this category",
+                                color = GrayText
                             )
                         }
                     } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(bottom = 16.dp)
                         ) {
                             items(state.data) { dish ->
                                 DishCard(
                                     dish = dish,
-                                    cartViewModel = cartViewModel
+                                    cartViewModel = cartViewModel,
+                                    onClick = { onNavigateToDishDetail(dish.id) }
                                 )
                             }
                         }
                     }
                 }
                 is UiState.Error -> {
-                    Card(
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .fillMaxSize()
                             .padding(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { categoriesViewModel.refreshDishes() },
+                            colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent)
                         ) {
-                            Text(
-                                text = state.message,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            TextButton(onClick = { categoriesViewModel.refreshDishes() }) {
-                                Text("Спробувати ще раз")
-                            }
+                            Text("Try again")
                         }
                     }
+                }
+                else -> {}
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryChip(
+    category: CategoryResponse,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (isSelected) OrangeAccent else CardBackground)
+            .border(
+                width = 1.dp,
+                color = if (isSelected) OrangeAccent else LightBorder,
+                shape = RoundedCornerShape(20.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    ) {
+        Text(
+            text = category.category_name,
+            color = if (isSelected) Color.White else GrayText,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            fontSize = 14.sp
+        )
+    }
+}
+
+@Composable
+private fun DishCard(
+    dish: MenuItem,
+    cartViewModel: CartViewModel,
+    onClick: () -> Unit = {}
+) {
+    val cartState by cartViewModel.cart.collectAsStateWithLifecycle()
+    val quantity = cartState.items.find { it.menuItem.id == dish.id }?.quantity ?: 0
+    
+    val context = LocalContext.current
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = CardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column {
+            // Dish Image
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(190.dp)
+                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                OrangeLight.copy(alpha = 0.3f),
+                                OrangeLight.copy(alpha = 0.1f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                // Додаємо base URL якщо URL відносний
+                val fullImageUrl = dish.imageUrl?.let { url ->
+                    if (url.startsWith("http")) url else "$IMAGE_BASE_URL$url"
+                }
+                
+                if (!fullImageUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(fullImageUrl)
+                            .crossfade(true)
+                            .size(Size(300, 240)) // Зменшуємо розмір зображення з бази
+                            .memoryCacheKey("${dish.id}_small")
+                            .diskCacheKey("${dish.id}_small")
+                            .build(),
+                        contentDescription = dish.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Placeholder іконка коли немає зображення
+                    Icon(
+                        imageVector = Icons.Default.Restaurant,
+                        contentDescription = null,
+                        tint = OrangeAccent.copy(alpha = 0.5f),
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+                
+                // Discount badge
+                if (dish.discount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.Red)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "-${dish.discount.toInt()}%",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            
+            Column(
+                modifier = Modifier.padding(10.dp)
+            ) {
+                Text(
+                    text = dish.name,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = DarkText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Spacer(modifier = Modifier.height(2.dp))
+                
+                Text(
+                    text = "${String.format("%.0f", dish.price)} ₴",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+                
+                Spacer(modifier = Modifier.height(6.dp))
+                
+                if (dish.available) {
+                    if (quantity > 0) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(LightBorder)
+                                        .clickable { cartViewModel.updateItemQuantity(dish.id, quantity - 1) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Remove,
+                                        contentDescription = "Decrease",
+                                        tint = DarkText,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                                
+                                Text(
+                                    text = "$quantity",
+                                    fontWeight = FontWeight.Bold,
+                                    color = DarkText,
+                                    fontSize = 13.sp
+                                )
+                                
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(OrangeAccent)
+                                        .clickable { cartViewModel.addItem(dish) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Increase",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = { cartViewModel.addItem(dish) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(32.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = OrangeAccent
+                            ),
+                            shape = RoundedCornerShape(6.dp),
+                            contentPadding = PaddingValues(vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Add",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "Unavailable",
+                        color = GrayText,
+                        fontSize = 12.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
@@ -219,142 +602,90 @@ fun HomeScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryChip(
-    category: com.mobiledelivery.data.api.models.CategoryResponse,
-    isSelected: Boolean,
-    onClick: () -> Unit
+private fun BottomNavigationBar(
+    cartItemCount: Int,
+    onHomeClick: () -> Unit,
+    onMenuClick: () -> Unit,
+    onCartClick: () -> Unit,
+    onProfileClick: () -> Unit
 ) {
-    FilterChip(
-        selected = isSelected,
-        onClick = onClick,
-        label = { Text(category.category_name) },
-        modifier = Modifier.padding(vertical = 4.dp)
-    )
-}
-
-@Composable
-fun DishCard(
-    dish: MenuItem,
-    cartViewModel: CartViewModel
-) {
-    val quantityInCart by cartViewModel.cart.collectAsStateWithLifecycle()
-    val quantity = quantityInCart.items.find { it.menuItem.id == dish.id }?.quantity ?: 0
-    
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    NavigationBar(
+        containerColor = CardBackground,
+        tonalElevation = 8.dp
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = dish.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+        NavigationBarItem(
+            selected = true,
+            onClick = onHomeClick,
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Home,
+                    contentDescription = "Home"
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                dish.description?.let { description ->
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "${String.format("%.2f", dish.price)} ₴",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    if (dish.discount > 0) {
-                        Text(
-                            text = "-${String.format("%.0f", dish.discount)}%",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-                if (!dish.available) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Недоступно",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-            
-            // Кнопки управління кількістю
-            if (dish.available) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    if (quantity > 0) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            IconButton(
-                                onClick = { cartViewModel.updateItemQuantity(dish.id, quantity - 1) }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.RemoveCircle,
-                                    contentDescription = "Зменшити"
-                                )
-                            }
-                            Text(
-                                text = "$quantity",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            IconButton(
-                                onClick = { cartViewModel.addItem(dish) }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "Збільшити"
-                                )
+            },
+            label = { Text("Home") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = OrangeAccent,
+                selectedTextColor = OrangeAccent,
+                indicatorColor = OrangeAccent.copy(alpha = 0.1f)
+            )
+        )
+        
+        NavigationBarItem(
+            selected = false,
+            onClick = onMenuClick,
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.RestaurantMenu,
+                    contentDescription = "Menu"
+                )
+            },
+            label = { Text("Menu") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = OrangeAccent,
+                selectedTextColor = OrangeAccent
+            )
+        )
+        
+        NavigationBarItem(
+            selected = false,
+            onClick = onCartClick,
+            icon = {
+                BadgedBox(
+                    badge = {
+                        if (cartItemCount > 0) {
+                            Badge(containerColor = OrangeAccent) {
+                                Text("$cartItemCount")
                             }
                         }
-                    } else {
-                        IconButton(
-                            onClick = { cartViewModel.addItem(dish) },
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.primary,
-                                    RoundedCornerShape(8.dp)
-                                )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Додати до кошика",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
                     }
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.ShoppingCart,
+                        contentDescription = "Cart"
+                    )
                 }
-            }
-        }
+            },
+            label = { Text("Cart") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = OrangeAccent,
+                selectedTextColor = OrangeAccent
+            )
+        )
+        
+        NavigationBarItem(
+            selected = false,
+            onClick = onProfileClick,
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.Person,
+                    contentDescription = "Profile"
+                )
+            },
+            label = { Text("Profile") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = OrangeAccent,
+                selectedTextColor = OrangeAccent
+            )
+        )
     }
 }
-

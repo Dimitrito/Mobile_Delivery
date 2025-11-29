@@ -92,6 +92,9 @@ dependencies {
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

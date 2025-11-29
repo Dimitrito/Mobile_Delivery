@@ -2,6 +2,8 @@ package com.mobiledelivery.data.api
 
 import com.mobiledelivery.data.api.models.ApiResponse
 import com.mobiledelivery.data.api.models.AuthResponse
+import com.mobiledelivery.data.api.models.ForgotPasswordRequest
+import com.mobiledelivery.data.api.models.ForgotPasswordResponse
 import com.mobiledelivery.data.api.models.LoginRequest
 import com.mobiledelivery.data.api.models.RegisterRequest
 import io.ktor.client.*
@@ -78,6 +80,16 @@ class AuthApiService(
      */
     suspend inline fun <reified T> getCurrentUser(): ApiResponse<T> {
         return get("user")
+    }
+    
+    /**
+     * Відновлення паролю - надсилає новий пароль на email
+     * @param email Email користувача
+     * @return ApiResponse з результатом
+     */
+    suspend fun forgotPassword(email: String): ApiResponse<ForgotPasswordResponse> {
+        val request = ForgotPasswordRequest(email = email)
+        return postPublic("forgot_password", request)
     }
 }
 
