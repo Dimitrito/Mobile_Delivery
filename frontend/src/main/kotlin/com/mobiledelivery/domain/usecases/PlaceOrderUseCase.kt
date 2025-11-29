@@ -1,32 +1,38 @@
 package com.mobiledelivery.domain.usecases
 
+import com.mobiledelivery.data.repository.OrderRepository
+import com.mobiledelivery.domain.models.Cart
 import com.mobiledelivery.domain.models.Order
 
 /**
  * Use case для створення замовлення
- * TODO: Потрібно створити OrderRepository для повної реалізації
  */
-class PlaceOrderUseCase {
+class PlaceOrderUseCase(
+    private val orderRepository: OrderRepository
+) {
     /**
-     * Створює замовлення
-     * @param order Замовлення для створення
+     * Створює замовлення з кошика
+     * @param userId ID користувача
+     * @param cart Кошик з товарами
+     * @param deliveryAddress Адреса доставки (опціонально)
      * @return Result з Order або помилкою
      */
-    suspend operator fun invoke(order: Order): Result<Order> {
+    suspend operator fun invoke(
+        userId: Int,
+        cart: Cart,
+        deliveryAddress: String = ""
+    ): Result<Order> {
         // Валідація вхідних даних
-        if (order.items.isEmpty()) {
-            return Result.failure(IllegalArgumentException("Замовлення не може бути порожнім"))
+        if (cart.isEmpty) {
+            return Result.failure(IllegalArgumentException("Кошик порожній"))
         }
-        if (order.totalPrice <= 0) {
+        if (cart.totalPrice <= 0) {
             return Result.failure(IllegalArgumentException("Сума замовлення повинна бути більше 0"))
         }
-        if (order.userId <= 0) {
+        if (userId <= 0) {
             return Result.failure(IllegalArgumentException("ID користувача некоректний"))
         }
         
-        // TODO: Реалізувати логіку створення замовлення через OrderRepository
-        // Наразі повертаємо помилку, оскільки OrderRepository ще не створено
-        return Result.failure(NotImplementedError("PlaceOrderUseCase потребує OrderRepository"))
+        return orderRepository.createOrderFromCart(userId, cart, deliveryAddress)
     }
 }
-

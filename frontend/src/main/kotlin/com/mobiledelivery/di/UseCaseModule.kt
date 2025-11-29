@@ -93,11 +93,12 @@ object UseCaseModule {
     
     /**
      * Створює PlaceOrderUseCase
+     * @param tokenManager Менеджер токенів
      * @return PlaceOrderUseCase
      */
-    fun createPlaceOrderUseCase(): PlaceOrderUseCase {
-        // TODO: Додати OrderRepository коли він буде створено
-        return PlaceOrderUseCase()
+    fun createPlaceOrderUseCase(tokenManager: TokenManager): PlaceOrderUseCase {
+        val orderRepository = RepositoryModule.createOrderRepository(tokenManager)
+        return PlaceOrderUseCase(orderRepository)
     }
 }
 

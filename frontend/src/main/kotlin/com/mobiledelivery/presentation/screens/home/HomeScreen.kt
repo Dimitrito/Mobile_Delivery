@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +43,11 @@ fun HomeScreen(
     val selectedCategoryId by categoriesViewModel.selectedCategoryId.collectAsStateWithLifecycle()
     
     val cartState by cartViewModel.cart.collectAsStateWithLifecycle()
+    
+    // Завантажуємо категорії коли екран відображається
+    LaunchedEffect(Unit) {
+        categoriesViewModel.initialize()
+    }
     
     Scaffold(
         topBar = {

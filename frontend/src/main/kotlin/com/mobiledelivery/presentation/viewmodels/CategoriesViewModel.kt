@@ -21,18 +21,26 @@ class CategoriesViewModel(
 ) : ViewModel() {
     
     // Стан категорій
-    private val _categoriesState = MutableStateFlow<UiState<List<CategoryResponse>>>(UiState.Loading)
+    private val _categoriesState = MutableStateFlow<UiState<List<CategoryResponse>>>(UiState.Idle)
     val categoriesState: StateFlow<UiState<List<CategoryResponse>>> = _categoriesState.asStateFlow()
     
     // Стан страв для вибраної категорії
-    private val _dishesState = MutableStateFlow<UiState<List<MenuItem>>>(UiState.Loading)
+    private val _dishesState = MutableStateFlow<UiState<List<MenuItem>>>(UiState.Idle)
     val dishesState: StateFlow<UiState<List<MenuItem>>> = _dishesState.asStateFlow()
     
     // Вибрана категорія
     private val _selectedCategoryId = MutableStateFlow<Int?>(null)
     val selectedCategoryId: StateFlow<Int?> = _selectedCategoryId.asStateFlow()
     
-    init {
+    // Чи було вже завантажено категорії
+    private var isInitialized = false
+    
+    /**
+     * Ініціалізує завантаження категорій (викликається з HomeScreen)
+     */
+    fun initialize() {
+        if (isInitialized) return
+        isInitialized = true
         loadCategories()
     }
     

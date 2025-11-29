@@ -28,10 +28,33 @@ data class ApiError(
     val error: String? = null,
     val message: String? = null,
     val detail: String? = null,
-    val code: Int? = null
+    val code: String? = null,
+    // Поля для валідаційних помилок Django REST Framework
+    val email: List<String>? = null,
+    val password: List<String>? = null,
+    val password2: List<String>? = null,
+    val phone_number: List<String>? = null,
+    val first_name: List<String>? = null,
+    val last_name: List<String>? = null,
+    val non_field_errors: List<String>? = null
 ) {
     fun getErrorMessage(): String {
-        return error ?: message ?: detail ?: "Невідома помилка"
+        // Спочатку перевіряємо валідаційні помилки полів
+        val fieldErrors = listOfNotNull(
+            email?.firstOrNull()?.let { "Email: $it" },
+            password?.firstOrNull()?.let { "Пароль: $it" },
+            password2?.firstOrNull()?.let { "Підтвердження паролю: $it" },
+            phone_number?.firstOrNull()?.let { "Номер телефону: $it" },
+            first_name?.firstOrNull()?.let { "Ім'я: $it" },
+            last_name?.firstOrNull()?.let { "Прізвище: $it" },
+            non_field_errors?.firstOrNull()
+        )
+        
+        if (fieldErrors.isNotEmpty()) {
+            return fieldErrors.joinToString("\n")
+        }
+        
+        return detail ?: message ?: error ?: "Невідома помилка"
     }
 }
 

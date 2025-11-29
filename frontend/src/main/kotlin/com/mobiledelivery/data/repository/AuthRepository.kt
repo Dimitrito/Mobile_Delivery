@@ -22,6 +22,9 @@ class AuthRepository(
      * @return Result з User або помилкою
      */
     suspend fun login(email: String, password: String): Result<User> {
+        // Очищаємо старий токен перед логіном
+        tokenManager.clearToken()
+        
         return when (val response = authApiService.login(email, password)) {
             is ApiResponse.Success -> {
                 // Зберігаємо токен

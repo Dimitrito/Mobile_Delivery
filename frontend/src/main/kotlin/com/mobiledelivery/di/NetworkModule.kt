@@ -2,6 +2,7 @@ package com.mobiledelivery.di
 
 import com.mobiledelivery.data.api.ApiClient
 import com.mobiledelivery.data.api.AuthApiService
+import com.mobiledelivery.data.api.OrderApiService
 import com.mobiledelivery.data.api.RestaurantApiService
 import com.mobiledelivery.data.shared.TokenManager
 
@@ -35,6 +36,16 @@ object NetworkModule {
         val client = ApiClient.client
         val tokenProvider: (() -> String?)? = tokenManager?.let { { it.getToken() } }
         return RestaurantApiService(client, baseUrl, tokenProvider)
+    }
+    
+    /**
+     * Створює API сервіс для роботи з замовленнями
+     * @param tokenManager Менеджер токенів (обов'язково для автентифікованих запитів)
+     */
+    fun createOrderApiService(tokenManager: TokenManager): OrderApiService {
+        val client = ApiClient.client
+        val tokenProvider: (() -> String?) = { tokenManager.getToken() }
+        return OrderApiService(client, baseUrl, tokenProvider)
     }
     
     /**

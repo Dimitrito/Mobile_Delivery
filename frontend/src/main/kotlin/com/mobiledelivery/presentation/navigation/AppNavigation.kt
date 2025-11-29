@@ -53,7 +53,9 @@ fun AppNavigation(navController: NavHostController) {
     }
     
     val cartViewModel = remember {
-        CartViewModel()
+        CartViewModel(
+            placeOrderUseCase = UseCaseModule.createPlaceOrderUseCase(tokenManager)
+        )
     }
     
     NavHost(
@@ -104,11 +106,11 @@ fun AppNavigation(navController: NavHostController) {
         composable(Screen.Cart.route) {
             CartScreen(
                 cartViewModel = cartViewModel,
+                authViewModel = authViewModel,
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onPlaceOrder = {
-                    // TODO: Реалізувати створення замовлення
+                onOrderPlaced = {
                     navController.popBackStack()
                 }
             )

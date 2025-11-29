@@ -11,26 +11,80 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.size
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.mobiledelivery.presentation.states.UiState
+import com.mobiledelivery.presentation.viewmodels.AuthViewModel
 import com.mobiledelivery.presentation.viewmodels.CartViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
     cartViewModel: CartViewModel,
+    authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
-    onPlaceOrder: () -> Unit
+    onOrderPlaced: () -> Unit
 ) {
     val cart by cartViewModel.cart.collectAsStateWithLifecycle()
+    val orderState by cartViewModel.orderState.collectAsStateWithLifecycle()
+    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+    
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var deliveryAddress by remember { mutableStateOf("") }
+    
+    // Обробка стану замовлення
+    LaunchedEffect(orderState) {
+        when (orderState) {
+            is UiState.Success -> {
+                showSuccessDialog = true
+            }
+            else -> {}
+        }
+    }
+    
+    // Діалог успішного замовлення
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showSuccessDialog = false
+                cartViewModel.resetOrderState()
+                onOrderPlaced()
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+            },
+            title = { Text("Замовлення створено!") },
+            text = { Text("Ваше замовлення успішно оформлено. Очікуйте на доставку.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSuccessDialog = false
+                        cartViewModel.resetOrderState()
+                        onOrderPlaced()
+                    }
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
     
     Scaffold(
         topBar = {
@@ -55,6 +109,17 @@ fun CartScreen(
                     Column(
                         modifier = Modifier.padding(16.dp)
                     ) {
+                        // Поле для адреси доставки
+                        OutlinedTextField(
+                            value = deliveryAddress,
+                            onValueChange = { deliveryAddress = it },
+                            label = { Text("Адреса доставки") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -72,11 +137,35 @@ fun CartScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Помилка замовлення
+                        if (orderState is UiState.Error) {
+                            Text(
+                                text = (orderState as UiState.Error).message,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                        
                         Button(
-                            onClick = onPlaceOrder,
-                            modifier = Modifier.fillMaxWidth()
+                            onClick = {
+                                currentUser?.let { user ->
+                                    cartViewModel.placeOrder(user.id, deliveryAddress)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = orderState !is UiState.Loading && currentUser != null
                         ) {
-                            Text("Оформити замовлення")
+                            if (orderState is UiState.Loading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text(if (orderState is UiState.Loading) "Оформлення..." else "Оформити замовлення")
                         }
                     }
                 }
@@ -236,4 +325,3 @@ fun CartItemCard(
         }
     }
 }
-
