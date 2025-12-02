@@ -39,10 +39,31 @@ data class ForgotPasswordRequest(
 )
 
 /**
+ * Модель запиту для оновлення профілю
+ */
+@Serializable
+data class UpdateProfileRequest(
+    val phone_number: String? = null,
+    val first_name: String? = null,
+    val last_name: String? = null,
+    val delivery_address: String? = null,
+    val password: String? = null
+)
+
+/**
  * Модель відповіді для відновлення паролю
  */
 @Serializable
 data class ForgotPasswordResponse(
+    val message: String? = null,
+    val error: String? = null
+)
+
+/**
+ * Проста відповідь з повідомленням
+ */
+@Serializable
+data class SimpleMessageResponse(
     val message: String? = null,
     val error: String? = null
 )

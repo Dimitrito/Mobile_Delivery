@@ -8,6 +8,8 @@ data class User(
     val email: String,
     val firstName: String? = null,
     val lastName: String? = null,
-    val phoneNumber: String? = null
+    val phoneNumber: String? = null,
+    val roleId: Int? = null,
+    val isCourier: Boolean = false
 )
 

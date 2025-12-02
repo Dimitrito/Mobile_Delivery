@@ -53,167 +53,176 @@ abstract class DeliveryApiService(
             val response = client.get("$baseUrl$endpoint") {
                 addDefaultHeaders()
             }
+            
             if (response.status.isSuccess()) {
-                ApiResponse.Success(response.body<T>())
+                val data = response.body<T>()
+                ApiResponse.Success(data)
             } else {
-                handleError(response)
+                val errorBody = try {
+                    response.body<String>()
+                } catch (e: Exception) {
+                    "Помилка: ${response.status}"
+                }
+                ApiResponse.Error("Помилка запиту: ${response.status}. $errorBody")
             }
+        } catch (e: ClientRequestException) {
+            val errorBody = try {
+                e.response.body<String>()
+            } catch (ex: Exception) {
+                e.message ?: "Помилка запиту"
+            }
+            ApiResponse.Error(errorBody)
+        } catch (e: SerializationException) {
+            ApiResponse.Error("Помилка десеріалізації: ${e.message}")
         } catch (e: Exception) {
-            handleException(e)
+            ApiResponse.Error("Помилка мережі: ${e.message}")
         }
     }
     
     /**
-     * Виконує GET запит без авторизації (для публічних endpoints)
+     * Виконує GET запит без автентифікації (публічний)
      */
     suspend inline fun <reified T> getPublic(endpoint: String): ApiResponse<T> {
         return try {
             val response = client.get("$baseUrl$endpoint") {
                 addPublicHeaders()
             }
+            
             if (response.status.isSuccess()) {
-                ApiResponse.Success(response.body<T>())
+                val data = response.body<T>()
+                ApiResponse.Success(data)
             } else {
-                handleError(response)
+                val errorBody = try {
+                    response.body<String>()
+                } catch (e: Exception) {
+                    "Помилка: ${response.status}"
+                }
+                ApiResponse.Error("Помилка запиту: ${response.status}. $errorBody")
             }
+        } catch (e: ClientRequestException) {
+            val errorBody = try {
+                e.response.body<String>()
+            } catch (ex: Exception) {
+                e.message ?: "Помилка запиту"
+            }
+            ApiResponse.Error(errorBody)
+        } catch (e: SerializationException) {
+            ApiResponse.Error("Помилка десеріалізації: ${e.message}")
         } catch (e: Exception) {
-            handleException(e)
+            ApiResponse.Error("Помилка мережі: ${e.message}")
         }
     }
     
     /**
      * Виконує POST запит
      */
-    suspend inline fun <reified T> post(
-        endpoint: String, 
-        body: Any
-    ): ApiResponse<T> {
+    suspend inline fun <reified T> post(endpoint: String, body: Any? = null): ApiResponse<T> {
         return try {
             val response = client.post("$baseUrl$endpoint") {
                 addDefaultHeaders()
-                setBody(body)
+                if (body != null) {
+                    setBody(body)
+                }
             }
+            
             if (response.status.isSuccess()) {
-                ApiResponse.Success(response.body<T>())
+                val data = response.body<T>()
+                ApiResponse.Success(data)
             } else {
-                handleError(response)
+                val errorBody = try {
+                    response.body<String>()
+                } catch (e: Exception) {
+                    "Помилка: ${response.status}"
+                }
+                ApiResponse.Error("Помилка запиту: ${response.status}. $errorBody")
             }
+        } catch (e: ClientRequestException) {
+            val errorBody = try {
+                e.response.body<String>()
+            } catch (ex: Exception) {
+                e.message ?: "Помилка запиту"
+            }
+            ApiResponse.Error(errorBody)
+        } catch (e: SerializationException) {
+            ApiResponse.Error("Помилка десеріалізації: ${e.message}")
         } catch (e: Exception) {
-            handleException(e)
+            ApiResponse.Error("Помилка мережі: ${e.message}")
         }
     }
     
     /**
-     * Виконує POST запит без авторизації (для публічних endpoints)
+     * Виконує POST запит без автентифікації (публічний)
      */
-    suspend inline fun <reified T> postPublic(
-        endpoint: String, 
-        body: Any
-    ): ApiResponse<T> {
+    suspend inline fun <reified T> postPublic(endpoint: String, body: Any? = null): ApiResponse<T> {
         return try {
             val response = client.post("$baseUrl$endpoint") {
                 addPublicHeaders()
-                setBody(body)
+                if (body != null) {
+                    setBody(body)
+                }
             }
+            
             if (response.status.isSuccess()) {
-                ApiResponse.Success(response.body<T>())
+                val data = response.body<T>()
+                ApiResponse.Success(data)
             } else {
-                handleError(response)
+                val errorBody = try {
+                    response.body<String>()
+                } catch (e: Exception) {
+                    "Помилка: ${response.status}"
+                }
+                ApiResponse.Error("Помилка запиту: ${response.status}. $errorBody")
             }
+        } catch (e: ClientRequestException) {
+            val errorBody = try {
+                e.response.body<String>()
+            } catch (ex: Exception) {
+                e.message ?: "Помилка запиту"
+            }
+            ApiResponse.Error(errorBody)
+        } catch (e: SerializationException) {
+            ApiResponse.Error("Помилка десеріалізації: ${e.message}")
         } catch (e: Exception) {
-            handleException(e)
+            ApiResponse.Error("Помилка мережі: ${e.message}")
         }
     }
     
     /**
      * Виконує PUT запит
      */
-    suspend inline fun <reified T> put(
-        endpoint: String, 
-        body: Any
-    ): ApiResponse<T> {
+    suspend inline fun <reified T> put(endpoint: String, body: Any? = null): ApiResponse<T> {
         return try {
             val response = client.put("$baseUrl$endpoint") {
                 addDefaultHeaders()
-                setBody(body)
+                if (body != null) {
+                    setBody(body)
+                }
             }
+            
             if (response.status.isSuccess()) {
-                ApiResponse.Success(response.body<T>())
+                val data = response.body<T>()
+                ApiResponse.Success(data)
             } else {
-                handleError(response)
+                val errorBody = try {
+                    response.body<String>()
+                } catch (e: Exception) {
+                    "Помилка: ${response.status}"
+                }
+                ApiResponse.Error("Помилка запиту: ${response.status}. $errorBody")
             }
-        } catch (e: Exception) {
-            handleException(e)
-        }
-    }
-    
-    /**
-     * Виконує DELETE запит
-     */
-    suspend fun delete(endpoint: String): ApiResponse<Unit> {
-        return try {
-            val response = client.delete("$baseUrl$endpoint") {
-                addDefaultHeaders()
+        } catch (e: ClientRequestException) {
+            val errorBody = try {
+                e.response.body<String>()
+            } catch (ex: Exception) {
+                e.message ?: "Помилка запиту"
             }
-            if (response.status.isSuccess()) {
-                ApiResponse.Success(Unit)
-            } else {
-                handleError(response)
-            }
-        } catch (e: Exception) {
-            handleException(e)
-        }
-    }
-    
-    /**
-     * Обробка помилок HTTP відповіді
-     */
-    suspend fun <T> handleError(response: HttpResponse): ApiResponse<T> {
-        return try {
-            val errorBody = response.body<ApiError>()
-            ApiResponse.Error(
-                message = errorBody.getErrorMessage(),
-                code = response.status.value
-            )
+            ApiResponse.Error(errorBody)
         } catch (e: SerializationException) {
-            // Якщо не вдалося розпарсити помилку, повертаємо загальне повідомлення
-            ApiResponse.Error(
-                message = "Помилка ${response.status.value}: ${response.status.description}",
-                code = response.status.value
-            )
-        }
-    }
-    
-    /**
-     * Обробка винятків під час виконання запиту
-     */
-    fun <T> handleException(e: Exception): ApiResponse<T> {
-        return when (e) {
-            is ClientRequestException -> {
-                ApiResponse.Error(
-                    message = "Помилка запиту: ${e.message}",
-                    code = e.response.status.value
-                )
-            }
-            is ServerResponseException -> {
-                ApiResponse.Error(
-                    message = "Помилка сервера: ${e.message}",
-                    code = e.response.status.value
-                )
-            }
-            is SerializationException -> {
-                ApiResponse.Error(
-                    message = "Помилка обробки даних: ${e.message}",
-                    code = null
-                )
-            }
-            else -> {
-                ApiResponse.Error(
-                    message = "Мережева помилка: ${e.message ?: "Невідома помилка"}",
-                    code = null
-                )
-            }
+            ApiResponse.Error("Помилка десеріалізації: ${e.message}")
+        } catch (e: Exception) {
+            ApiResponse.Error("Помилка мережі: ${e.message}")
         }
     }
 }
+
 

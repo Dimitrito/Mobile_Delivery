@@ -6,6 +6,8 @@ import com.mobiledelivery.data.api.models.ForgotPasswordRequest
 import com.mobiledelivery.data.api.models.ForgotPasswordResponse
 import com.mobiledelivery.data.api.models.LoginRequest
 import com.mobiledelivery.data.api.models.RegisterRequest
+import com.mobiledelivery.data.api.models.SimpleMessageResponse
+import com.mobiledelivery.data.api.models.UpdateProfileRequest
 import io.ktor.client.*
 
 /**
@@ -90,6 +92,16 @@ class AuthApiService(
     suspend fun forgotPassword(email: String): ApiResponse<ForgotPasswordResponse> {
         val request = ForgotPasswordRequest(email = email)
         return postPublic("forgot_password", request)
+    }
+
+    /**
+     * Оновлює профіль користувача
+     */
+    suspend fun updateProfile(
+        userId: Int,
+        request: UpdateProfileRequest
+    ): ApiResponse<SimpleMessageResponse> {
+        return put("update_profile/$userId", request)
     }
 }
 

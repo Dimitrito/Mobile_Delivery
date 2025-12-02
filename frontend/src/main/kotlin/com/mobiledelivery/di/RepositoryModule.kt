@@ -3,6 +3,7 @@ package com.mobiledelivery.di
 import com.mobiledelivery.data.api.AuthApiService
 import com.mobiledelivery.data.api.RestaurantApiService
 import com.mobiledelivery.data.repository.AuthRepository
+import com.mobiledelivery.data.repository.DeliveryRepository
 import com.mobiledelivery.data.repository.OrderRepository
 import com.mobiledelivery.data.repository.RestaurantRepository
 import com.mobiledelivery.data.shared.TokenManager
@@ -41,6 +42,16 @@ object RepositoryModule {
     fun createOrderRepository(tokenManager: TokenManager): OrderRepository {
         val orderApiService = NetworkModule.createOrderApiService(tokenManager)
         return OrderRepository(orderApiService)
+    }
+    
+    /**
+     * Створює репозиторій для роботи з доставками
+     * @param tokenManager Менеджер токенів
+     * @return DeliveryRepository
+     */
+    fun createDeliveryRepository(tokenManager: TokenManager): DeliveryRepository {
+        val deliveryApiService = NetworkModule.createCourierDeliveryApiService(tokenManager)
+        return DeliveryRepository(deliveryApiService)
     }
 }
 

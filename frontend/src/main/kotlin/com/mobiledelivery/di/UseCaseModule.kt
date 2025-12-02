@@ -110,5 +110,80 @@ object UseCaseModule {
         val authRepository = RepositoryModule.createAuthRepository(tokenManager)
         return ForgotPasswordUseCase(authRepository)
     }
+
+    /**
+     * Створює UpdateProfileUseCase
+     */
+    fun createUpdateProfileUseCase(tokenManager: TokenManager): UpdateProfileUseCase {
+        val authRepository = RepositoryModule.createAuthRepository(tokenManager)
+        return UpdateProfileUseCase(authRepository)
+    }
+
+    /**
+     * Створює GetCustomerUseCase
+     */
+    fun createGetCustomerUseCase(tokenManager: TokenManager): GetCustomerUseCase {
+        val orderRepository = RepositoryModule.createOrderRepository(tokenManager)
+        return GetCustomerUseCase(orderRepository)
+    }
+
+    /**
+     * Створює GetOrdersUseCase
+     */
+    fun createGetOrdersUseCase(tokenManager: TokenManager): GetOrdersUseCase {
+        val orderRepository = RepositoryModule.createOrderRepository(tokenManager)
+        return GetOrdersUseCase(orderRepository)
+    }
+    
+    /**
+     * Створює CreatePayPalPaymentUseCase
+     * 
+     * @param useTestMode Якщо false - використовує реальний PayPal Sandbox API
+     *                    Якщо true - використовує мок-методи (без викликів до API)
+     *                    
+     * PayPal Sandbox - це реальний API PayPal в тестовому режимі.
+     * Він імітує справжню оплату, але не списує реальні гроші.
+     */
+    fun createPayPalPaymentUseCase(useTestMode: Boolean = false): com.mobiledelivery.domain.usecases.CreatePayPalPaymentUseCase {
+        // Завжди використовуємо Sandbox для тестування
+        val payPalApiService = NetworkModule.createPayPalApiService(isSandbox = true)
+        return com.mobiledelivery.domain.usecases.CreatePayPalPaymentUseCase(payPalApiService, useTestMode)
+    }
+    
+    /**
+     * Створює CapturePayPalPaymentUseCase
+     * 
+     * @param useTestMode Якщо false - використовує реальний PayPal Sandbox API
+     *                    Якщо true - використовує мок-методи (без викликів до API)
+     */
+    fun createCapturePayPalPaymentUseCase(useTestMode: Boolean = false): com.mobiledelivery.domain.usecases.CapturePayPalPaymentUseCase {
+        // Завжди використовуємо Sandbox для тестування
+        val payPalApiService = NetworkModule.createPayPalApiService(isSandbox = true)
+        return com.mobiledelivery.domain.usecases.CapturePayPalPaymentUseCase(payPalApiService, useTestMode)
+    }
+    
+    /**
+     * Створює GetCourierDeliveriesUseCase
+     */
+    fun createGetCourierDeliveriesUseCase(tokenManager: TokenManager): GetCourierDeliveriesUseCase {
+        val deliveryRepository = RepositoryModule.createDeliveryRepository(tokenManager)
+        return GetCourierDeliveriesUseCase(deliveryRepository)
+    }
+    
+    /**
+     * Створює MarkDeliveryAsDeliveredUseCase
+     */
+    fun createMarkDeliveryAsDeliveredUseCase(tokenManager: TokenManager): MarkDeliveryAsDeliveredUseCase {
+        val deliveryRepository = RepositoryModule.createDeliveryRepository(tokenManager)
+        return MarkDeliveryAsDeliveredUseCase(deliveryRepository)
+    }
+    
+    /**
+     * Створює GetCourierByUserIdUseCase
+     */
+    fun createGetCourierByUserIdUseCase(tokenManager: TokenManager): GetCourierByUserIdUseCase {
+        val deliveryRepository = RepositoryModule.createDeliveryRepository(tokenManager)
+        return GetCourierByUserIdUseCase(deliveryRepository)
+    }
 }
 

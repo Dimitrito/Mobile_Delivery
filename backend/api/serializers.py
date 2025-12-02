@@ -50,9 +50,25 @@ class CategoriesSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    role_id = serializers.SerializerMethodField()
+    is_courier = serializers.SerializerMethodField()
+    
+    def get_role_id(self, obj):
+        return obj.role.id if obj.role else None
+    
+    def get_is_courier(self, obj):
+        """Проверяет, есть ли пользователь в таблице Courier"""
+        try:
+            courier = Courier.objects.get(user=obj)
+            print(f"DEBUG: User {obj.email} (id={obj.id}) is a courier (courier_id={courier.id})")
+            return True
+        except Courier.DoesNotExist:
+            print(f"DEBUG: User {obj.email} (id={obj.id}) is NOT a courier")
+            return False
+    
     class Meta:
         model = get_user_model()
-        fields = ("id", "email", "phone_number", "is_staff", "first_name", "last_name")
+        fields = ("id", "email", "phone_number", "is_staff", "first_name", "last_name", "role_id", "is_courier")
 
 
 class FeedbackSerializer(serializers.ModelSerializer):

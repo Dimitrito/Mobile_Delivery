@@ -1,14 +1,22 @@
 package com.mobiledelivery.presentation.navigation
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.material3.Text
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -19,6 +27,8 @@ import com.mobiledelivery.di.UseCaseModule
 import com.mobiledelivery.data.shared.PreferencesManager
 import com.mobiledelivery.data.shared.TokenManager
 import com.mobiledelivery.presentation.screens.cart.CartScreen
+import com.mobiledelivery.presentation.screens.courier.CourierOrderDetailScreen
+import com.mobiledelivery.presentation.screens.courier.CourierOrdersScreen
 import com.mobiledelivery.presentation.screens.dishdetail.DishDetailScreen
 import com.mobiledelivery.presentation.screens.home.HomeScreen
 import com.mobiledelivery.presentation.screens.login.LoginScreen
@@ -27,6 +37,7 @@ import com.mobiledelivery.presentation.screens.register.RegisterScreen
 import com.mobiledelivery.presentation.states.UiState
 import com.mobiledelivery.presentation.viewmodels.AuthViewModel
 import com.mobiledelivery.presentation.viewmodels.CartViewModel
+import com.mobiledelivery.presentation.viewmodels.CourierViewModel
 import com.mobiledelivery.presentation.viewmodels.CategoriesViewModel
 
 /**
@@ -38,9 +49,14 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Cart : Screen("cart")
     object Profile : Screen("profile")
+    object CourierOrders : Screen("courier_orders")
     
     object DishDetail : Screen("dish_detail/{dishId}") {
         fun createRoute(dishId: Int) = "dish_detail/$dishId"
+    }
+    
+    object CourierOrderDetail : Screen("courier_order_detail/{orderId}") {
+        fun createRoute(orderId: Int) = "courier_order_detail/$orderId"
     }
 }
 
@@ -59,7 +75,10 @@ fun AppNavigation(navController: NavHostController) {
             logoutUseCase = UseCaseModule.createLogoutUseCase(tokenManager),
             getCurrentUserUseCase = UseCaseModule.createGetCurrentUserUseCase(tokenManager),
             isAuthenticatedUseCase = UseCaseModule.createIsAuthenticatedUseCase(tokenManager),
-            forgotPasswordUseCase = UseCaseModule.createForgotPasswordUseCase(tokenManager)
+            forgotPasswordUseCase = UseCaseModule.createForgotPasswordUseCase(tokenManager),
+            updateProfileUseCase = UseCaseModule.createUpdateProfileUseCase(tokenManager),
+            getCustomerUseCase = UseCaseModule.createGetCustomerUseCase(tokenManager),
+            getOrdersUseCase = UseCaseModule.createGetOrdersUseCase(tokenManager)
         )
     }
     
@@ -72,7 +91,18 @@ fun AppNavigation(navController: NavHostController) {
     
     val cartViewModel = remember {
         CartViewModel(
-            placeOrderUseCase = UseCaseModule.createPlaceOrderUseCase(tokenManager)
+            placeOrderUseCase = UseCaseModule.createPlaceOrderUseCase(tokenManager),
+            // Используем реальный PayPal Sandbox API (тестовый режим, но реальный API)
+            createPayPalPaymentUseCase = UseCaseModule.createPayPalPaymentUseCase(useTestMode = false),
+            capturePayPalPaymentUseCase = UseCaseModule.createCapturePayPalPaymentUseCase(useTestMode = false)
+        )
+    }
+    
+    val courierViewModel = remember {
+        CourierViewModel(
+            getCourierDeliveriesUseCase = UseCaseModule.createGetCourierDeliveriesUseCase(tokenManager),
+            markDeliveryAsDeliveredUseCase = UseCaseModule.createMarkDeliveryAsDeliveredUseCase(tokenManager),
+            getCourierByUserIdUseCase = UseCaseModule.createGetCourierByUserIdUseCase(tokenManager)
         )
     }
     
@@ -134,6 +164,9 @@ fun AppNavigation(navController: NavHostController) {
                     } else {
                         navController.navigate(Screen.Login.route)
                     }
+                },
+                onNavigateToCourierOrders = {
+                    navController.navigate(Screen.CourierOrders.route)
                 },
                 onNavigateToDishDetail = { dishId ->
                     navController.navigate(Screen.DishDetail.createRoute(dishId))
@@ -199,6 +232,82 @@ fun AppNavigation(navController: NavHostController) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Страву не знайдено")
+                }
+            }
+        }
+        
+        composable(Screen.CourierOrders.route) {
+            val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+            
+            LaunchedEffect(currentUser) {
+                currentUser?.let { user ->
+                    courierViewModel.loadCourierId(user.id)
+                }
+            }
+            
+            CourierOrdersScreen(
+                courierViewModel = courierViewModel,
+                onNavigateToOrderDetail = { delivery ->
+                    // Зберігаємо delivery в ViewModel перед навігацією
+                    courierViewModel.setSelectedDelivery(delivery)
+                    navController.navigate(Screen.CourierOrderDetail.createRoute(delivery.orderId))
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        
+        composable(
+            route = Screen.CourierOrderDetail.route,
+            arguments = listOf(navArgument("orderId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getInt("orderId") ?: return@composable
+            
+            // Отримуємо вибрану доставку з ViewModel
+            val selectedDelivery by courierViewModel.selectedDelivery.collectAsStateWithLifecycle()
+            
+            // Якщо доставка не знайдена в ViewModel, намагаємось знайти її в списку
+            val delivery = selectedDelivery ?: run {
+                val deliveriesState by courierViewModel.deliveriesState.collectAsStateWithLifecycle()
+                when (val state = deliveriesState) {
+                    is UiState.Success -> state.data.find { it.orderId == orderId }
+                    else -> null
+                }
+            }
+            
+            if (delivery != null) {
+                CourierOrderDetailScreen(
+                    delivery = delivery,
+                    courierViewModel = courierViewModel,
+                    onNavigateBack = {
+                        courierViewModel.clearSelectedDelivery()
+                        navController.popBackStack()
+                    }
+                )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Доставку не знайдено",
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = {
+                                courierViewModel.clearSelectedDelivery()
+                                navController.popBackStack()
+                            }
+                        ) {
+                            Text("Повернутися назад")
+                        }
+                    }
                 }
             }
         }

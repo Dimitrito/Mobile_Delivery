@@ -1,8 +1,6 @@
 package com.mobiledelivery.presentation.screens.cart
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,12 +42,13 @@ fun CartScreen(
 ) {
     val cart by cartViewModel.cart.collectAsStateWithLifecycle()
     val orderState by cartViewModel.orderState.collectAsStateWithLifecycle()
+    val payPalPaymentState by cartViewModel.payPalPaymentState.collectAsStateWithLifecycle()
+    val payPalCaptureState by cartViewModel.payPalCaptureState.collectAsStateWithLifecycle()
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     
     var showSuccessDialog by remember { mutableStateOf(false) }
+    var showPayPalDialog by remember { mutableStateOf(false) }
     var deliveryAddress by remember { mutableStateOf("") }
-    var isDelivery by remember { mutableStateOf(true) }
-    var isCashPayment by remember { mutableStateOf(true) }
     
     // Обробка стану замовлення
     LaunchedEffect(orderState) {
@@ -60,6 +58,139 @@ fun CartScreen(
             }
             else -> {}
         }
+    }
+    
+    // Обробка PayPal платежу
+    LaunchedEffect(payPalPaymentState) {
+        when (val state = payPalPaymentState) {
+            is UiState.Success -> {
+                // Після створення платежу автоматично підтверджуємо його (тестовий режим)
+                cartViewModel.capturePayPalPayment(state.data.id)
+            }
+            else -> {}
+        }
+    }
+    
+    // Обробка підтвердження PayPal платежу
+    LaunchedEffect(payPalCaptureState) {
+        when (val state = payPalCaptureState) {
+            is UiState.Success -> {
+                // Після успішної оплати через PayPal створюємо замовлення
+                currentUser?.let { user ->
+                    cartViewModel.placeOrder(user.id, deliveryAddress)
+                }
+                showPayPalDialog = false
+                cartViewModel.resetPayPalPaymentState()
+                cartViewModel.resetPayPalCaptureState()
+            }
+            is UiState.Error -> {
+                showPayPalDialog = false
+            }
+            else -> {}
+        }
+    }
+    
+    // Діалог PayPal оплати
+    if (showPayPalDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showPayPalDialog = false
+                cartViewModel.resetPayPalPaymentState()
+            },
+            title = {
+                Text(
+                    text = "PayPal Payment",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    when (val state = payPalPaymentState) {
+                        is UiState.Loading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(16.dp)
+                            )
+                            Text(
+                                text = "Creating payment...",
+                                modifier = Modifier.padding(top = 16.dp)
+                            )
+                        }
+                        is UiState.Success -> {
+                            Text("Payment created successfully!")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Order ID: ${state.data.id}")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            if (payPalCaptureState is UiState.Loading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .padding(8.dp)
+                                )
+                                Text("Processing payment...")
+                            }
+                        }
+                        is UiState.Error -> {
+                            Text(
+                                text = state.message,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        else -> {}
+                    }
+                    
+                    when (val state = payPalCaptureState) {
+                        is UiState.Success -> {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Payment completed!",
+                                color = GreenAccent,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        is UiState.Error -> {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = state.message,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        else -> {}
+                    }
+                }
+            },
+            confirmButton = {
+                when {
+                    payPalCaptureState is UiState.Success -> {
+                        TextButton(onClick = {
+                            showPayPalDialog = false
+                            cartViewModel.resetPayPalPaymentState()
+                            cartViewModel.resetPayPalCaptureState()
+                        }) {
+                            Text("OK")
+                        }
+                    }
+                    payPalPaymentState is UiState.Error || payPalCaptureState is UiState.Error -> {
+                        TextButton(onClick = {
+                            showPayPalDialog = false
+                            cartViewModel.resetPayPalPaymentState()
+                            cartViewModel.resetPayPalCaptureState()
+                        }) {
+                            Text("Close")
+                        }
+                    }
+                    else -> {
+                        TextButton(onClick = {
+                            showPayPalDialog = false
+                            cartViewModel.resetPayPalPaymentState()
+                        }) {
+                            Text("Cancel")
+                        }
+                    }
+                }
+            }
+        )
     }
     
     // Діалог успішного замовлення
@@ -186,120 +317,44 @@ fun CartScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
-                    // Delivery Method
+                    // Delivery Address
                     item {
-                        Text(
-                            text = "Delivery method",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = DarkText
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            DeliveryMethodButton(
-                                text = "Delivery",
-                                isSelected = isDelivery,
-                                onClick = { isDelivery = true },
-                                modifier = Modifier.weight(1f)
-                            )
-                            DeliveryMethodButton(
-                                text = "Pickup",
-                                isSelected = !isDelivery,
-                                onClick = { isDelivery = false },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-                    
-                    // Address
-                    if (isDelivery) {
-                        item {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Address",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = DarkText
-                                )
-                                TextButton(onClick = { }) {
-                                    Text(
-                                        text = "Edit",
-                                        color = OrangeAccent,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                            OutlinedTextField(
-                                value = deliveryAddress,
-                                onValueChange = { deliveryAddress = it },
-                                placeholder = { Text("Enter delivery address", color = GrayText) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = CardBackground,
-                                    unfocusedContainerColor = CardBackground,
-                                    focusedBorderColor = OrangeAccent,
-                                    unfocusedBorderColor = LightBorder
-                                ),
-                                singleLine = true
-                            )
-                        }
-                    }
-                    
-                    // Payment Method
-                    item {
-                        Text(
-                            text = "Payment method",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = DarkText
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (isCashPayment) "Cash" else "Card",
-                                fontSize = 14.sp,
+                                text = "Delivery address",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = DarkText
                             )
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
+                            TextButton(onClick = { }) {
                                 Text(
-                                    text = "Card",
-                                    fontSize = 12.sp,
-                                    color = if (!isCashPayment) OrangeAccent else GrayText
-                                )
-                                Switch(
-                                    checked = isCashPayment,
-                                    onCheckedChange = { isCashPayment = it },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = Color.White,
-                                        checkedTrackColor = GreenAccent,
-                                        uncheckedThumbColor = Color.White,
-                                        uncheckedTrackColor = GrayText
-                                    )
-                                )
-                                Text(
-                                    text = "Cash",
-                                    fontSize = 12.sp,
-                                    color = if (isCashPayment) GreenAccent else GrayText
+                                    text = "Edit",
+                                    color = OrangeAccent,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = deliveryAddress,
+                            onValueChange = { deliveryAddress = it },
+                            placeholder = { Text("Enter delivery address", color = GrayText) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = CardBackground,
+                                unfocusedContainerColor = CardBackground,
+                                focusedBorderColor = OrangeAccent,
+                                unfocusedBorderColor = LightBorder
+                            ),
+                            singleLine = true
+                        )
                     }
                     
                     // Divider
@@ -361,36 +416,40 @@ fun CartScreen(
                         .background(CardBackground)
                         .padding(16.dp)
                 ) {
-                    // Place Order Button
+                    // Payment Button (Card/PayPal)
                     Button(
                         onClick = {
-                            currentUser?.let { user ->
-                                cartViewModel.placeOrder(user.id, deliveryAddress)
-                            }
+                            cartViewModel.createPayPalPayment("USD")
+                            showPayPalDialog = true
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
                         shape = RoundedCornerShape(28.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = OrangeAccent,
-                            disabledContainerColor = OrangeAccent.copy(alpha = 0.5f)
+                            containerColor = Color(0xFF0070BA), // PayPal синій колір
+                            disabledContainerColor = Color(0xFF0070BA).copy(alpha = 0.5f)
                         ),
-                        enabled = orderState !is UiState.Loading && currentUser != null
+                        enabled = payPalPaymentState !is UiState.Loading && currentUser != null && cart.totalPrice > 0 && deliveryAddress.isNotBlank()
                     ) {
-                        if (orderState is UiState.Loading) {
+                        if (payPalPaymentState is UiState.Loading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
                                 color = Color.White,
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text(
-                                text = "Place order",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "Pay with card",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                     
@@ -410,48 +469,6 @@ fun CartScreen(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DeliveryMethodButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) OrangeAccent.copy(alpha = 0.1f) else CardBackground)
-            .border(
-                width = 1.dp,
-                color = if (isSelected) OrangeAccent else LightBorder,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = text,
-                color = if (isSelected) OrangeAccent else GrayText,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-            )
-            if (isSelected) {
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = OrangeAccent,
-                    modifier = Modifier.size(20.dp)
-                )
             }
         }
     }

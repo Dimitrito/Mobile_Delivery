@@ -33,6 +33,7 @@ import coil.size.Size
 import coil.transform.RoundedCornersTransformation
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
+import android.util.Log
 import com.mobiledelivery.data.api.models.CategoryResponse
 import com.mobiledelivery.domain.models.MenuItem
 import com.mobiledelivery.presentation.states.UiState
@@ -61,6 +62,7 @@ fun HomeScreen(
     onLogout: () -> Unit,
     onNavigateToCart: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToCourierOrders: () -> Unit = {},
     onNavigateToDishDetail: (Int) -> Unit = {}
 ) {
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
@@ -71,6 +73,14 @@ fun HomeScreen(
     
     var searchQuery by remember { mutableStateOf("") }
     
+    // Перевіряємо чи користувач є кур'єром (перевірка через таблицю Courier)
+    val isCourier = remember(currentUser) {
+        val result = currentUser?.isCourier == true
+        // Відладочний лог
+        Log.d("HomeScreen", "User: ${currentUser?.email}, isCourier: ${currentUser?.isCourier}, result: $result")
+        result
+    }
+    
     LaunchedEffect(Unit) {
         categoriesViewModel.initialize()
     }
@@ -80,10 +90,11 @@ fun HomeScreen(
         bottomBar = {
             BottomNavigationBar(
                 cartItemCount = cartState.itemCount,
-                onHomeClick = { },
+                isCourier = isCourier,
                 onMenuClick = { },
                 onCartClick = onNavigateToCart,
-                onProfileClick = onNavigateToProfile
+                onProfileClick = onNavigateToProfile,
+                onOrdersClick = onNavigateToCourierOrders
             )
         }
     ) { paddingValues ->
@@ -93,13 +104,11 @@ fun HomeScreen(
                 .padding(paddingValues)
         ) {
             // Header
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(CardBackground)
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 Text(
                     text = "Mobile Delivery",
@@ -107,36 +116,14 @@ fun HomeScreen(
                     fontWeight = FontWeight.Bold,
                     color = DarkText
                 )
-                
-                IconButton(onClick = onNavigateToCart) {
-                    BadgedBox(
-                        badge = {
-                            if (cartState.itemCount > 0) {
-                                Badge(
-                                    containerColor = OrangeAccent
-                                ) {
-                                    Text("${cartState.itemCount}")
-                                }
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.ShoppingCart,
-                            contentDescription = "Cart",
-                            tint = DarkText
-                        )
-                    }
-                }
             }
             
             // Search Bar
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(CardBackground)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 OutlinedTextField(
                     value = searchQuery,
@@ -150,7 +137,7 @@ fun HomeScreen(
                         )
                     },
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()
                         .height(52.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -161,21 +148,6 @@ fun HomeScreen(
                     ),
                     singleLine = true
                 )
-                
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(OrangeAccent)
-                        .clickable { onNavigateToCart() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = "Cart",
-                        tint = Color.White
-                    )
-                }
             }
             
             // Categories
@@ -224,80 +196,11 @@ fun HomeScreen(
                 else -> {}
             }
             
-            // Promo Banner
+            // Popular Section Header
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(140.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(OrangeAccent, OrangeLight)
-                        )
-                    )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Free Delivery",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = "On first order",
-                            fontSize = 16.sp,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White,
-                                contentColor = OrangeAccent
-                            ),
-                            shape = RoundedCornerShape(20.dp),
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
-                        ) {
-                            Text(
-                                text = "Order now",
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-                    
-                    // Food icon placeholder
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Fastfood,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
-                }
-            }
-            
-            // Popular Section Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
                     text = "Popular",
@@ -305,12 +208,6 @@ fun HomeScreen(
                     fontWeight = FontWeight.Bold,
                     color = DarkText
                 )
-                TextButton(onClick = { }) {
-                    Text(
-                        text = "For you",
-                        color = GrayText
-                    )
-                }
             }
             
             // Dishes Grid
@@ -324,13 +221,29 @@ fun HomeScreen(
                     }
                 }
                 is UiState.Success -> {
-                    if (state.data.isEmpty()) {
+                    // Фільтруємо страви за пошуковим запитом
+                    val filteredDishes = remember(state.data, searchQuery) {
+                        val query = searchQuery.trim()
+                        if (query.isEmpty()) {
+                            state.data
+                        } else {
+                            state.data.filter { dish ->
+                                dish.name.contains(query, ignoreCase = true) ||
+                                        (dish.description?.contains(query, ignoreCase = true) ?: false)
+                            }
+                        }
+                    }
+                    
+                    if (filteredDishes.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No dishes in this category",
+                                text = if (state.data.isEmpty())
+                                    "No dishes in this category"
+                                else
+                                    "No dishes found for \"$searchQuery\"",
                                 color = GrayText
                             )
                         }
@@ -344,7 +257,7 @@ fun HomeScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(bottom = 16.dp)
                         ) {
-                            items(state.data) { dish ->
+                            items(filteredDishes) { dish ->
                                 DishCard(
                                     dish = dish,
                                     cartViewModel = cartViewModel,
@@ -604,10 +517,11 @@ private fun DishCard(
 @Composable
 private fun BottomNavigationBar(
     cartItemCount: Int,
-    onHomeClick: () -> Unit,
+    isCourier: Boolean,
     onMenuClick: () -> Unit,
     onCartClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onOrdersClick: () -> Unit
 ) {
     NavigationBar(
         containerColor = CardBackground,
@@ -615,23 +529,6 @@ private fun BottomNavigationBar(
     ) {
         NavigationBarItem(
             selected = true,
-            onClick = onHomeClick,
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Home,
-                    contentDescription = "Home"
-                )
-            },
-            label = { Text("Home") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = OrangeAccent,
-                selectedTextColor = OrangeAccent,
-                indicatorColor = OrangeAccent.copy(alpha = 0.1f)
-            )
-        )
-        
-        NavigationBarItem(
-            selected = false,
             onClick = onMenuClick,
             icon = {
                 Icon(
@@ -642,10 +539,12 @@ private fun BottomNavigationBar(
             label = { Text("Menu") },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = OrangeAccent,
-                selectedTextColor = OrangeAccent
+                selectedTextColor = OrangeAccent,
+                indicatorColor = OrangeAccent.copy(alpha = 0.1f)
             )
         )
         
+        // Для всіх користувачів показуємо Cart
         NavigationBarItem(
             selected = false,
             onClick = onCartClick,
@@ -671,6 +570,25 @@ private fun BottomNavigationBar(
                 selectedTextColor = OrangeAccent
             )
         )
+        
+        // Для кур'єрів додатково показуємо вкладку Orders
+        if (isCourier) {
+            NavigationBarItem(
+                selected = false,
+                onClick = onOrdersClick,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.ListAlt,
+                        contentDescription = "Orders"
+                    )
+                },
+                label = { Text("Orders") },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = OrangeAccent,
+                    selectedTextColor = OrangeAccent
+                )
+            )
+        }
         
         NavigationBarItem(
             selected = false,

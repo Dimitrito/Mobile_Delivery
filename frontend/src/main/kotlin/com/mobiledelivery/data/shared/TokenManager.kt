@@ -8,6 +8,10 @@ class TokenManager(private val preferencesManager: PreferencesManager) {
     fun saveToken(token: String) {
         preferencesManager.saveToken(token)
     }
+
+    fun setLoggedIn(isLoggedIn: Boolean) {
+        preferencesManager.setLoggedIn(isLoggedIn)
+    }
     
     fun getToken(): String? {
         return preferencesManager.getToken()

@@ -7,6 +7,8 @@ import com.mobiledelivery.data.api.models.CustomerResponse
 import com.mobiledelivery.data.api.models.DishToOrderResponse
 import com.mobiledelivery.data.api.models.OrderResponse
 import io.ktor.client.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
 /**
  * API сервіс для роботи з замовленнями
@@ -50,6 +52,25 @@ class OrderApiService(
      */
     suspend fun getOrders(userId: Int): ApiResponse<List<OrderResponse>> {
         return get("order/$userId")
+    }
+    
+    /**
+     * Отримує деталі замовлення
+     */
+    suspend fun getOrderDetail(orderId: Int): ApiResponse<OrderResponse> {
+        return get("order/detail/$orderId")
+    }
+    
+    /**
+     * Оновлює статус замовлення на "paid" після PayPal оплати
+     */
+    suspend fun updateOrderStatusToPaid(orderId: Int): ApiResponse<Map<String, Any>> {
+        @Serializable
+        data class UpdateOrderStatusRequest(
+            @SerialName("order_id")
+            val order_id: Int
+        )
+        return post("payments/update_order/", UpdateOrderStatusRequest(orderId))
     }
 }
 

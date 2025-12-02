@@ -4,6 +4,7 @@ import com.mobiledelivery.data.api.OrderApiService
 import com.mobiledelivery.data.api.models.ApiResponse
 import com.mobiledelivery.data.api.models.CreateDishToOrderRequest
 import com.mobiledelivery.data.api.models.CreateOrderRequest
+import com.mobiledelivery.data.api.models.CustomerResponse
 import com.mobiledelivery.domain.models.Cart
 import com.mobiledelivery.domain.models.Order
 import com.mobiledelivery.domain.models.OrderItem
@@ -33,8 +34,7 @@ class OrderRepository(
         deliveryAddress: String = ""
     ): Result<Order> {
         // 1. Отримуємо Customer ID за User ID
-        val customerResponse = orderApiService.getCustomer(userId)
-        val customerId = when (customerResponse) {
+        val customerId = when (val customerResponse = orderApiService.getCustomer(userId)) {
             is ApiResponse.Success -> customerResponse.data.id
             is ApiResponse.Error -> return Result.failure(Exception(customerResponse.message))
             is ApiResponse.Loading -> return Result.failure(Exception("Завантаження..."))
@@ -79,7 +79,15 @@ class OrderRepository(
             }
         }
         
-        // 4. Повертаємо результат
+        // 4. Оновлюємо статус замовлення на "paid" після PayPal оплати
+        // Це викличе сигнал create_delivery_on_order_paid в backend
+        val updateStatusResponse = orderApiService.updateOrderStatusToPaid(createdOrder.id)
+        if (updateStatusResponse is ApiResponse.Error) {
+            // Логуємо помилку, але не повертаємо помилку, бо замовлення вже створено
+            println("Помилка оновлення статусу замовлення: ${updateStatusResponse.message}")
+        }
+        
+        // 5. Повертаємо результат
         val order = Order(
             id = createdOrder.id,
             userId = userId,
@@ -91,7 +99,7 @@ class OrderRepository(
                 )
             },
             totalPrice = createdOrder.price,
-            status = OrderStatus.PENDING,
+            status = OrderStatus.DELIVERING, // Після оплати замовлення в доставці
             createdAt = createdOrder.start_time
         )
         
@@ -102,15 +110,7 @@ class OrderRepository(
      * Отримує замовлення користувача
      */
     suspend fun getOrders(userId: Int): Result<List<Order>> {
-        // Отримуємо Customer ID
-        val customerResponse = orderApiService.getCustomer(userId)
-        val customerId = when (customerResponse) {
-            is ApiResponse.Success -> customerResponse.data.id
-            is ApiResponse.Error -> return Result.failure(Exception(customerResponse.message))
-            is ApiResponse.Loading -> return Result.failure(Exception("Завантаження..."))
-        }
-        
-        return when (val response = orderApiService.getOrders(customerId)) {
+        return when (val response = orderApiService.getOrders(userId)) {
             is ApiResponse.Success -> {
                 val orders = response.data.map { orderResponse ->
                     Order(
@@ -129,6 +129,17 @@ class OrderRepository(
         }
     }
     
+    /**
+     * Отримує інформацію про клієнта
+     */
+    suspend fun getCustomer(userId: Int): Result<CustomerResponse> {
+        return when (val response = orderApiService.getCustomer(userId)) {
+            is ApiResponse.Success -> Result.success(response.data)
+            is ApiResponse.Error -> Result.failure(Exception(response.message))
+            is ApiResponse.Loading -> Result.failure(Exception("Завантаження..."))
+        }
+    }
+
     private fun mapOrderStatus(status: String): OrderStatus {
         return when (status.lowercase()) {
             "pending" -> OrderStatus.PENDING
