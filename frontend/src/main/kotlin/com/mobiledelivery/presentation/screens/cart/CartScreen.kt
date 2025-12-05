@@ -45,10 +45,28 @@ fun CartScreen(
     val payPalPaymentState by cartViewModel.payPalPaymentState.collectAsStateWithLifecycle()
     val payPalCaptureState by cartViewModel.payPalCaptureState.collectAsStateWithLifecycle()
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+    val customerState by authViewModel.customerState.collectAsStateWithLifecycle()
     
     var showSuccessDialog by remember { mutableStateOf(false) }
     var showPayPalDialog by remember { mutableStateOf(false) }
     var deliveryAddress by remember { mutableStateOf("") }
+    
+    // Завантажуємо адресу доставки з профілю користувача
+    LaunchedEffect(currentUser) {
+        currentUser?.let { user ->
+            authViewModel.refreshProfileData()
+        }
+    }
+    
+    // Оновлюємо адресу доставки коли дані клієнта завантажені
+    LaunchedEffect(customerState) {
+        when (val state = customerState) {
+            is UiState.Success -> {
+                deliveryAddress = state.data.delivery_address
+            }
+            else -> {}
+        }
+    }
     
     // Обробка стану замовлення
     LaunchedEffect(orderState) {

@@ -21,6 +21,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.mobiledelivery.di.AppModule
 import com.mobiledelivery.di.UseCaseModule
@@ -78,7 +79,8 @@ fun AppNavigation(navController: NavHostController) {
             forgotPasswordUseCase = UseCaseModule.createForgotPasswordUseCase(tokenManager),
             updateProfileUseCase = UseCaseModule.createUpdateProfileUseCase(tokenManager),
             getCustomerUseCase = UseCaseModule.createGetCustomerUseCase(tokenManager),
-            getOrdersUseCase = UseCaseModule.createGetOrdersUseCase(tokenManager)
+            getOrdersUseCase = UseCaseModule.createGetOrdersUseCase(tokenManager),
+            getCourierByUserIdUseCase = UseCaseModule.createGetCourierByUserIdUseCase(tokenManager)
         )
     }
     
@@ -146,6 +148,10 @@ fun AppNavigation(navController: NavHostController) {
         }
         
         composable(Screen.Home.route) {
+            // Отримуємо актуальний маршрут для HomeScreen
+            val currentRouteState by navController.currentBackStackEntryAsState()
+            val currentRouteForHome = currentRouteState?.destination?.route ?: Screen.Home.route
+            
             HomeScreen(
                 authViewModel = authViewModel,
                 categoriesViewModel = categoriesViewModel,
@@ -170,7 +176,8 @@ fun AppNavigation(navController: NavHostController) {
                 },
                 onNavigateToDishDetail = { dishId ->
                     navController.navigate(Screen.DishDetail.createRoute(dishId))
-                }
+                },
+                currentRoute = currentRouteForHome
             )
         }
         
@@ -197,6 +204,9 @@ fun AppNavigation(navController: NavHostController) {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                },
+                onNavigateToCourierOrders = {
+                    navController.navigate(Screen.CourierOrders.route)
                 }
             )
         }

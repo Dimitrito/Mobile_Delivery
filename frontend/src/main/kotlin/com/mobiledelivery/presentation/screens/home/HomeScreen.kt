@@ -63,7 +63,8 @@ fun HomeScreen(
     onNavigateToCart: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToCourierOrders: () -> Unit = {},
-    onNavigateToDishDetail: (Int) -> Unit = {}
+    onNavigateToDishDetail: (Int) -> Unit = {},
+    currentRoute: String = "home"
 ) {
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val categoriesState by categoriesViewModel.categoriesState.collectAsStateWithLifecycle()
@@ -91,6 +92,7 @@ fun HomeScreen(
             BottomNavigationBar(
                 cartItemCount = cartState.itemCount,
                 isCourier = isCourier,
+                currentRoute = currentRoute,
                 onMenuClick = { },
                 onCartClick = onNavigateToCart,
                 onProfileClick = onNavigateToProfile,
@@ -118,40 +120,42 @@ fun HomeScreen(
                 )
             }
             
-            // Search Bar
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(CardBackground)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search", color = GrayText) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = GrayText
-                        )
-                    },
+            // Показуємо меню тільки для не-кур'єрів
+            if (!isCourier) {
+                // Search Bar
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = BackgroundColor,
-                        unfocusedContainerColor = BackgroundColor,
-                        focusedBorderColor = LightBorder,
-                        unfocusedBorderColor = LightBorder
-                    ),
-                    singleLine = true
-                )
-            }
-            
-            // Categories
-            when (val state = categoriesState) {
+                        .background(CardBackground)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search", color = GrayText) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = GrayText
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = BackgroundColor,
+                            unfocusedContainerColor = BackgroundColor,
+                            focusedBorderColor = LightBorder,
+                            unfocusedBorderColor = LightBorder
+                        ),
+                        singleLine = true
+                    )
+                }
+                
+                // Categories
+                when (val state = categoriesState) {
                 is UiState.Loading -> {
                     Box(
                         modifier = Modifier
@@ -196,22 +200,22 @@ fun HomeScreen(
                 else -> {}
             }
             
-            // Popular Section Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = "Popular",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
-            }
-            
-            // Dishes Grid
-            when (val state = dishesState) {
+                // Popular Section Header
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Popular",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
+                    )
+                }
+                
+                // Dishes Grid
+                when (val state = dishesState) {
                 is UiState.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -290,6 +294,39 @@ fun HomeScreen(
                     }
                 }
                 else -> {}
+                }
+            } else {
+                // Для кур'єрів показуємо повідомлення
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.LocalShipping,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = OrangeAccent
+                        )
+                        Text(
+                            text = "Courier Mode",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DarkText
+                        )
+                        Text(
+                            text = "Use the Orders tab to view your deliveries",
+                            fontSize = 16.sp,
+                            color = GrayText,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }
@@ -518,36 +555,45 @@ private fun DishCard(
 private fun BottomNavigationBar(
     cartItemCount: Int,
     isCourier: Boolean,
+    currentRoute: String,
     onMenuClick: () -> Unit,
     onCartClick: () -> Unit,
     onProfileClick: () -> Unit,
     onOrdersClick: () -> Unit
 ) {
+    // Визначаємо яка вкладка має бути виділена
+    val isMenuSelected = !isCourier && (currentRoute == "home" || currentRoute == "cart" || currentRoute.startsWith("dish_detail"))
+    val isCartSelected = !isCourier && currentRoute == "cart"
+    val isOrdersSelected = isCourier && (currentRoute == "home" || currentRoute == "courier_orders" || currentRoute.startsWith("courier_order_detail"))
+    val isProfileSelected = currentRoute == "profile"
+    
     NavigationBar(
         containerColor = CardBackground,
         tonalElevation = 8.dp
     ) {
-        NavigationBarItem(
-            selected = true,
-            onClick = onMenuClick,
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.RestaurantMenu,
-                    contentDescription = "Menu"
+        // Показуємо Menu тільки для не-кур'єрів
+        if (!isCourier) {
+            NavigationBarItem(
+                selected = isMenuSelected,
+                onClick = onMenuClick,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.RestaurantMenu,
+                        contentDescription = "Menu"
+                    )
+                },
+                label = { Text("Menu") },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = OrangeAccent,
+                    selectedTextColor = OrangeAccent,
+                    indicatorColor = Color.Transparent
                 )
-            },
-            label = { Text("Menu") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = OrangeAccent,
-                selectedTextColor = OrangeAccent,
-                indicatorColor = OrangeAccent.copy(alpha = 0.1f)
             )
-        )
-        
-        // Для всіх користувачів показуємо Cart
-        NavigationBarItem(
-            selected = false,
-            onClick = onCartClick,
+            
+            // Показуємо Cart тільки для не-кур'єрів
+            NavigationBarItem(
+                selected = isCartSelected,
+                onClick = onCartClick,
             icon = {
                 BadgedBox(
                     badge = {
@@ -571,10 +617,12 @@ private fun BottomNavigationBar(
             )
         )
         
-        // Для кур'єрів додатково показуємо вкладку Orders
+        }
+        
+        // Для кур'єрів показуємо вкладку Orders
         if (isCourier) {
             NavigationBarItem(
-                selected = false,
+                selected = isOrdersSelected,
                 onClick = onOrdersClick,
                 icon = {
                     Icon(
@@ -591,7 +639,7 @@ private fun BottomNavigationBar(
         }
         
         NavigationBarItem(
-            selected = false,
+            selected = isProfileSelected,
             onClick = onProfileClick,
             icon = {
                 Icon(

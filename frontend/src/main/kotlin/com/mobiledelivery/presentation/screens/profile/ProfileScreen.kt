@@ -45,7 +45,8 @@ private val IconOrange = Color(0xFFFF6B35)
 fun ProfileScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToCourierOrders: () -> Unit = {}
 ) {
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val customerState by authViewModel.customerState.collectAsStateWithLifecycle()
@@ -53,6 +54,8 @@ fun ProfileScreen(
     val updateProfileState by authViewModel.updateProfileState.collectAsStateWithLifecycle()
     var orderHistoryExpanded by remember { mutableStateOf(true) }
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    val isCourier = currentUser?.isCourier == true
     
     var firstName by rememberSaveable { mutableStateOf("") }
     var lastName by rememberSaveable { mutableStateOf("") }
@@ -122,6 +125,7 @@ fun ProfileScreen(
                 password = password,
                 customerState = customerState,
                 isSaving = isSaving,
+                isCourier = isCourier,
                 onFirstNameChange = { firstName = it },
                 onLastNameChange = { lastName = it },
                 onPhoneChange = { phoneNumber = it },
@@ -140,12 +144,24 @@ fun ProfileScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            OrderHistoryCard(
-                orderHistoryExpanded = orderHistoryExpanded,
-                orderHistoryState = orderHistoryState,
-                onToggle = { orderHistoryExpanded = !orderHistoryExpanded },
-                onRetry = { authViewModel.refreshOrderHistory() }
-            )
+            // Показуємо кур'єрський функціонал якщо користувач кур'єр
+            if (isCourier) {
+                CourierActionsCard(
+                    onNavigateToCourierOrders = onNavigateToCourierOrders
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            
+            // Показуємо історію замовлень тільки для кастомерів
+            if (!isCourier) {
+                OrderHistoryCard(
+                    orderHistoryExpanded = orderHistoryExpanded,
+                    orderHistoryState = orderHistoryState,
+                    onToggle = { orderHistoryExpanded = !orderHistoryExpanded },
+                    onRetry = { authViewModel.refreshOrderHistory() }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -297,6 +313,7 @@ private fun PersonalInfoCard(
     password: String,
     customerState: UiState<*>,
     isSaving: Boolean,
+    isCourier: Boolean,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
@@ -359,20 +376,24 @@ private fun PersonalInfoCard(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
-                value = address,
-                onValueChange = onAddressChange,
-                label = { Text("Delivery address") },
-                singleLine = false,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (customerState is UiState.Error) {
-                Text(
-                    text = customerState.message,
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 12.sp
+            // Показуємо адресу доставки тільки для кастомерів
+            if (!isCourier) {
+                OutlinedTextField(
+                    value = address,
+                    onValueChange = onAddressChange,
+                    label = { Text("Delivery address") },
+                    singleLine = false,
+                    modifier = Modifier.fillMaxWidth()
                 )
+                
+                // Показуємо помилку тільки для кастомерів
+                if (customerState is UiState.Error) {
+                    Text(
+                        text = customerState.message,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
+                }
             }
 
             OutlinedTextField(
@@ -555,6 +576,53 @@ private fun OrderHistoryItem(order: Order) {
                 color = GrayText,
                 fontSize = 12.sp
             )
+        }
+    }
+}
+
+@Composable
+private fun CourierActionsCard(
+    onNavigateToCourierOrders: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Courier Actions",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = DarkText
+            )
+            
+            Button(
+                onClick = onNavigateToCourierOrders,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = OrangeAccent,
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocalShipping,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "My Deliveries")
+            }
         }
     }
 }

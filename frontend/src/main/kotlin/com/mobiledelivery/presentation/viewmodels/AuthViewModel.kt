@@ -6,6 +6,7 @@ import com.mobiledelivery.data.api.models.CustomerResponse
 import com.mobiledelivery.domain.models.Order
 import com.mobiledelivery.domain.models.User
 import com.mobiledelivery.domain.usecases.ForgotPasswordUseCase
+import com.mobiledelivery.domain.usecases.GetCourierByUserIdUseCase
 import com.mobiledelivery.domain.usecases.GetCustomerUseCase
 import com.mobiledelivery.domain.usecases.GetCurrentUserUseCase
 import com.mobiledelivery.domain.usecases.GetOrdersUseCase
@@ -33,7 +34,8 @@ class AuthViewModel(
     private val forgotPasswordUseCase: ForgotPasswordUseCase? = null,
     private val updateProfileUseCase: UpdateProfileUseCase? = null,
     private val getCustomerUseCase: GetCustomerUseCase? = null,
-    private val getOrdersUseCase: GetOrdersUseCase? = null
+    private val getOrdersUseCase: GetOrdersUseCase? = null,
+    private val getCourierByUserIdUseCase: GetCourierByUserIdUseCase? = null
 ) : ViewModel() {
     
     // Стани для логіну
@@ -87,10 +89,21 @@ class AuthViewModel(
             _loginState.value = UiState.Loading
             loginUseCase(email, password)
                 .onSuccess { user ->
-                    _loginState.value = UiState.Success(user)
-                    _currentUser.value = user
-                    loadAdditionalUserData(user.id)
-                    _uiEvent.value = UiEvent.Navigate("home")
+                    // Перевіряємо чи користувач є кур'єром через api/courier
+                    checkAndUpdateCourierStatus(user.id) { isCourier ->
+                        val updatedUser = user.copy(isCourier = isCourier)
+                        _loginState.value = UiState.Success(updatedUser)
+                        _currentUser.value = updatedUser
+                        // Завантажуємо додаткові дані тільки якщо не кур'єр
+                        if (!isCourier) {
+                            loadAdditionalUserData(updatedUser.id)
+                        } else {
+                            // Очищаємо стани для кур'єрів
+                            _customerState.value = UiState.Idle
+                            _orderHistoryState.value = UiState.Idle
+                        }
+                        _uiEvent.value = UiEvent.Navigate("home")
+                    }
                 }
                 .onFailure { exception ->
                     _loginState.value = UiState.Error(exception.message ?: "Помилка входу")
@@ -151,8 +164,19 @@ class AuthViewModel(
         viewModelScope.launch {
             getCurrentUserUseCase()
                 .onSuccess { user ->
-                    _currentUser.value = user
-                    loadAdditionalUserData(user.id)
+                    // Перевіряємо чи користувач є кур'єром через api/courier
+                    checkAndUpdateCourierStatus(user.id) { isCourier ->
+                        val updatedUser = user.copy(isCourier = isCourier)
+                        _currentUser.value = updatedUser
+                        // Завантажуємо додаткові дані тільки якщо не кур'єр
+                        if (!isCourier) {
+                            loadAdditionalUserData(updatedUser.id)
+                        } else {
+                            // Очищаємо стани для кур'єрів
+                            _customerState.value = UiState.Idle
+                            _orderHistoryState.value = UiState.Idle
+                        }
+                    }
                 }
                 .onFailure {
                     // Якщо не вдалося завантажити користувача, виходимо
@@ -160,14 +184,52 @@ class AuthViewModel(
                 }
         }
     }
+    
+    /**
+     * Перевіряє чи користувач є кур'єром через api/courier
+     * Отримує список кур'єрів і перевіряє чи є там користувач
+     */
+    private suspend fun checkAndUpdateCourierStatus(userId: Int, onResult: (Boolean) -> Unit) {
+        val useCase = getCourierByUserIdUseCase
+        if (useCase == null) {
+            // Якщо use case недоступний, вважаємо що не кур'єр
+            onResult(false)
+            return
+        }
+        
+        useCase(userId)
+            .onSuccess { courierResponse ->
+                // Якщо знайдено кур'єра - користувач є кур'єром
+                val isCourier = courierResponse != null
+                onResult(isCourier)
+            }
+            .onFailure {
+                // У разі помилки вважаємо що не кур'єр
+                onResult(false)
+            }
+    }
 
     private fun loadAdditionalUserData(userId: Int) {
-        loadCustomer(userId)
-        loadOrderHistory(userId)
+        // Перевіряємо чи користувач є кур'єром перед завантаженням даних Customer
+        val isCourier = _currentUser.value?.isCourier == true
+        if (!isCourier) {
+            // Завантажуємо дані Customer тільки для не-кур'єрів
+            loadCustomer(userId)
+            loadOrderHistory(userId)
+        } else {
+            // Для кур'єрів не завантажуємо дані Customer та очищаємо стани
+            _customerState.value = UiState.Idle
+            _orderHistoryState.value = UiState.Idle
+        }
     }
 
     fun refreshProfileData() {
-        _currentUser.value?.id?.let { loadAdditionalUserData(it) }
+        _currentUser.value?.id?.let { userId ->
+            val isCourier = _currentUser.value?.isCourier == true
+            if (!isCourier) {
+                loadAdditionalUserData(userId)
+            }
+        }
     }
 
     private fun loadCustomer(userId: Int) {
