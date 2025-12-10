@@ -188,7 +188,7 @@ fun LoginScreen(
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
-                    text = "Forgot password?",
+                    text = "Забули пароль?",
                     color = DarkText,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
@@ -234,7 +234,7 @@ fun LoginScreen(
                     )
                 } else {
                     Text(
-                        text = "Sign in",
+                        text = "Увійти",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -249,7 +249,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 32.dp)
             ) {
                 Text(
-                    text = "Create account",
+                    text = "Створити акаунт",
                     color = DarkText,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium

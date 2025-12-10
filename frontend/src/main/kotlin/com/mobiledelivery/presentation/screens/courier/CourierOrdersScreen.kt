@@ -69,7 +69,7 @@ fun CourierOrdersScreen(
                     )
                 }
                 Text(
-                    text = "My Orders",
+                    text = "Мої замовлення",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = DarkText
@@ -110,14 +110,14 @@ fun CourierOrdersScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    text = "No orders",
+                                    text = "Немає замовлень",
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = DarkText
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "You don't have any orders yet",
+                                    text = "У вас поки немає замовлень",
                                     fontSize = 14.sp,
                                     color = GrayText
                                 )
@@ -164,7 +164,7 @@ fun CourierOrdersScreen(
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent)
                             ) {
-                                Text("Retry")
+                                Text("Повторити")
                             }
                         }
                     }
@@ -200,7 +200,7 @@ private fun DeliveryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Order #${delivery.orderId}",
+                    text = "Замовлення #${delivery.orderId}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = DarkText

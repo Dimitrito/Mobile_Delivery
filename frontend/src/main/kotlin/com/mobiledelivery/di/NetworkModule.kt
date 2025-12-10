@@ -3,6 +3,7 @@ package com.mobiledelivery.di
 import com.mobiledelivery.data.api.ApiClient
 import com.mobiledelivery.data.api.AuthApiService
 import com.mobiledelivery.data.api.CourierDeliveryApiService
+import com.mobiledelivery.data.api.FeedbackApiService
 import com.mobiledelivery.data.api.OrderApiService
 import com.mobiledelivery.data.api.PayPalApiService
 import com.mobiledelivery.data.api.RestaurantApiService
@@ -38,6 +39,15 @@ object NetworkModule {
         val client = ApiClient.client
         val tokenProvider: (() -> String?)? = tokenManager?.let { { it.getToken() } }
         return RestaurantApiService(client, baseUrl, tokenProvider)
+    }
+
+    /**
+     * Створює API сервіс для відгуків
+     */
+    fun createFeedbackApiService(tokenManager: TokenManager): FeedbackApiService {
+        val client = ApiClient.client
+        val tokenProvider: (() -> String?) = { tokenManager.getToken() }
+        return FeedbackApiService(client, baseUrl, tokenProvider)
     }
     
     /**

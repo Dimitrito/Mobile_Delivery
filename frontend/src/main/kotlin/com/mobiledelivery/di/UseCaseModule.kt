@@ -185,5 +185,21 @@ object UseCaseModule {
         val deliveryRepository = RepositoryModule.createDeliveryRepository(tokenManager)
         return GetCourierByUserIdUseCase(deliveryRepository)
     }
+
+    /**
+     * Створює GetFeedbacksUseCase
+     */
+    fun createGetFeedbacksUseCase(tokenManager: TokenManager): GetFeedbacksUseCase {
+        val feedbackRepository = RepositoryModule.createFeedbackRepository(tokenManager)
+        return GetFeedbacksUseCase(feedbackRepository)
+    }
+
+    /**
+     * Створює CreateFeedbackUseCase
+     */
+    fun createCreateFeedbackUseCase(tokenManager: TokenManager): CreateFeedbackUseCase {
+        val feedbackRepository = RepositoryModule.createFeedbackRepository(tokenManager)
+        return CreateFeedbackUseCase(feedbackRepository)
+    }
 }
 

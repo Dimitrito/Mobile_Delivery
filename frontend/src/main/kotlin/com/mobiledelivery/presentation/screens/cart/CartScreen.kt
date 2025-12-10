@@ -117,7 +117,7 @@ fun CartScreen(
             },
             title = {
                 Text(
-                    text = "PayPal Payment",
+                    text = "Оплата PayPal",
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -131,14 +131,14 @@ fun CartScreen(
                                     .padding(16.dp)
                             )
                             Text(
-                                text = "Creating payment...",
+                                text = "Створення платежу...",
                                 modifier = Modifier.padding(top = 16.dp)
                             )
                         }
                         is UiState.Success -> {
-                            Text("Payment created successfully!")
+                            Text("Платіж успішно створено!")
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("Order ID: ${state.data.id}")
+                            Text("ID замовлення: ${state.data.id}")
                             Spacer(modifier = Modifier.height(8.dp))
                             if (payPalCaptureState is UiState.Loading) {
                                 CircularProgressIndicator(
@@ -146,7 +146,7 @@ fun CartScreen(
                                         .align(Alignment.CenterHorizontally)
                                         .padding(8.dp)
                                 )
-                                Text("Processing payment...")
+                                Text("Обробка платежу...")
                             }
                         }
                         is UiState.Error -> {
@@ -162,7 +162,7 @@ fun CartScreen(
                         is UiState.Success -> {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Payment completed!",
+                                text = "Платіж завершено!",
                                 color = GreenAccent,
                                 fontWeight = FontWeight.Bold
                             )
@@ -229,13 +229,13 @@ fun CartScreen(
             },
             title = { 
                 Text(
-                    "Order placed!",
+                    "Замовлення оформлено!",
                     fontWeight = FontWeight.Bold
                 ) 
             },
             text = { 
                 Text(
-                    "Your order has been successfully placed. Wait for delivery.",
+                    "Ваше замовлення успішно оформлено. Очікуйте доставку.",
                     textAlign = TextAlign.Center
                 ) 
             },
@@ -275,21 +275,21 @@ fun CartScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Your cart is empty",
+                    text = "Ваш кошик порожній",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = DarkText
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Add dishes to your cart",
+                    text = "Додайте страви до кошика",
                     fontSize = 14.sp,
                     color = GrayText
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 TextButton(onClick = onNavigateBack) {
                     Text(
-                        text = "Back to menu",
+                        text = "Повернутися до меню",
                         color = OrangeAccent,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -314,18 +314,12 @@ fun CartScreen(
                         )
                     }
                     Text(
-                        text = "Checkout",
+                        text = "Оформлення замовлення",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = DarkText
                     )
-                    IconButton(onClick = { }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Notifications,
-                            contentDescription = "Notifications",
-                            tint = OrangeAccent
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(48.dp))
                 }
                 
                 LazyColumn(
@@ -339,28 +333,21 @@ fun CartScreen(
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.Start,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Delivery address",
+                                text = "Адреса доставки",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = DarkText
                             )
-                            TextButton(onClick = { }) {
-                                Text(
-                                    text = "Edit",
-                                    color = OrangeAccent,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = deliveryAddress,
                             onValueChange = { deliveryAddress = it },
-                            placeholder = { Text("Enter delivery address", color = GrayText) },
+                            placeholder = { Text("Введіть адресу доставки", color = GrayText) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
@@ -400,7 +387,7 @@ fun CartScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Order summary",
+                                text = "Підсумок замовлення",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = DarkText
@@ -462,7 +449,7 @@ fun CartScreen(
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 Text(
-                                    text = "Pay with card",
+                                    text = "Оплатити карткою",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White
@@ -480,7 +467,7 @@ fun CartScreen(
                     ) {
                         TextButton(onClick = onNavigateBack) {
                             Text(
-                                text = "Back to cart",
+                                text = "Повернутися до меню",
                                 color = OrangeAccent,
                                 fontWeight = FontWeight.Medium
                             )

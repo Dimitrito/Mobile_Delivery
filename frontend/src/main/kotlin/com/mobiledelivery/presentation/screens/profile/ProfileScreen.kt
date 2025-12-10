@@ -46,7 +46,8 @@ fun ProfileScreen(
     authViewModel: AuthViewModel,
     onNavigateBack: () -> Unit,
     onLogout: () -> Unit,
-    onNavigateToCourierOrders: () -> Unit = {}
+    onNavigateToCourierOrders: () -> Unit = {},
+    onNavigateToFeedback: () -> Unit = {}
 ) {
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     val customerState by authViewModel.customerState.collectAsStateWithLifecycle()
@@ -151,6 +152,11 @@ fun ProfileScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
+
+            FeedbackEntryCard(
+                onNavigateToFeedback = onNavigateToFeedback
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Показуємо історію замовлень тільки для кастомерів
             if (!isCourier) {
@@ -199,7 +205,7 @@ private fun ProfileHeader(onNavigateBack: () -> Unit) {
             }
 
             Text(
-                text = "Profile",
+                text = "Профіль",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = DarkText
@@ -336,7 +342,7 @@ private fun PersonalInfoCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Personal information",
+                text = "Особиста інформація",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = DarkText
@@ -429,7 +435,7 @@ private fun PersonalInfoCard(
                         contentDescription = null
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Save changes")
+                    Text(text = "Зберегти зміни")
                 }
             }
         }
@@ -469,7 +475,7 @@ private fun OrderHistoryCard(
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Order history",
+                        text = "Історія замовлень",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = DarkText
@@ -553,29 +559,76 @@ private fun OrderHistoryItem(order: Order) {
             .padding(16.dp)
     ) {
         Text(
-            text = "Order #${order.id}",
+            text = "Замовлення #${order.id}",
             fontWeight = FontWeight.Bold,
             color = DarkText
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Status: ${order.status.name.lowercase().replaceFirstChar { it.uppercase() }}",
+            text = "Статус: ${order.status.name.lowercase().replaceFirstChar { it.uppercase() }}",
             color = GrayText,
             fontSize = 12.sp
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
-            text = "Total: ${String.format("%.2f ₴", order.totalPrice)}",
+            text = "Всього: ${String.format("%.2f ₴", order.totalPrice)}",
             color = DarkText,
             fontWeight = FontWeight.SemiBold
         )
         order.createdAt?.let {
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "Created: ${it.replace('T', ' ')}",
+                text = "Створено: ${it.replace('T', ' ')}",
                 color = GrayText,
                 fontSize = 12.sp
             )
+        }
+    }
+}
+
+@Composable
+private fun FeedbackEntryCard(
+    onNavigateToFeedback: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Відгуки",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = DarkText
+            )
+
+            Button(
+                onClick = onNavigateToFeedback,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = OrangeAccent,
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Відкрити відгуки")
+            }
         }
     }
 }
@@ -599,7 +652,7 @@ private fun CourierActionsCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Courier Actions",
+                text = "Дії кур'єра",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = DarkText
@@ -621,7 +674,7 @@ private fun CourierActionsCard(
                     contentDescription = null
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "My Deliveries")
+                Text(text = "Мої доставки")
             }
         }
     }
@@ -648,7 +701,7 @@ private fun LogoutButton(onLogoutClick: () -> Unit) {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "Log out",
+            text = "Вийти",
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
         )

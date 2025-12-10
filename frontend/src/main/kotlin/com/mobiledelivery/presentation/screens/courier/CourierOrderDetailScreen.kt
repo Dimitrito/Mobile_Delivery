@@ -70,7 +70,7 @@ fun CourierOrderDetailScreen(
                     )
                 }
                 Text(
-                    text = "Order #${delivery.orderId}",
+                    text = "Замовлення #${delivery.orderId}",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = DarkText
@@ -97,7 +97,7 @@ fun CourierOrderDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Order Information",
+                            text = "Інформація про замовлення",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = DarkText
@@ -107,27 +107,27 @@ fun CourierOrderDetailScreen(
                         
                         InfoRow(
                             icon = Icons.Default.LocationOn,
-                            label = "Delivery Address",
+                            label = "Адреса доставки",
                             value = delivery.deliveryAddress
                         )
                         
                         if (delivery.customerPhoneNumber != null) {
                             InfoRow(
                                 icon = Icons.Default.Phone,
-                                label = "Customer Phone",
+                                label = "Телефон клієнта",
                                 value = delivery.customerPhoneNumber
                             )
                         }
                         
                         InfoRow(
                             icon = Icons.Default.Schedule,
-                            label = "Status",
+                            label = "Статус",
                             value = delivery.deliveryStatus.name.replace("_", " ").uppercase()
                         )
                         
                         InfoRow(
                             icon = Icons.Default.AccessTime,
-                            label = "Start Time",
+                            label = "Час початку",
                             value = delivery.startTime
                         )
                     }
@@ -161,7 +161,7 @@ fun CourierOrderDetailScreen(
                                 tint = Color.White
                             )
                             Text(
-                                text = "Mark as Delivered",
+                                text = "Позначити як доставлено",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White

@@ -364,7 +364,7 @@ fun RegisterScreen(
                     )
                 } else {
                     Text(
-                        text = "Create account",
+                        text = "Створити акаунт",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -378,10 +378,10 @@ fun RegisterScreen(
                 Text(
                     buildAnnotatedString {
                         withStyle(style = SpanStyle(color = DarkText)) {
-                            append("I already have an ")
+                            append("Вже є акаунт? ")
                         }
                         withStyle(style = SpanStyle(color = OrangeAccent, fontWeight = FontWeight.SemiBold)) {
-                            append("account")
+                            append("Увійти")
                         }
                     },
                     fontSize = 16.sp

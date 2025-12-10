@@ -4,6 +4,7 @@ import com.mobiledelivery.data.api.AuthApiService
 import com.mobiledelivery.data.api.RestaurantApiService
 import com.mobiledelivery.data.repository.AuthRepository
 import com.mobiledelivery.data.repository.DeliveryRepository
+import com.mobiledelivery.data.repository.FeedbackRepository
 import com.mobiledelivery.data.repository.OrderRepository
 import com.mobiledelivery.data.repository.RestaurantRepository
 import com.mobiledelivery.data.shared.TokenManager
@@ -52,6 +53,14 @@ object RepositoryModule {
     fun createDeliveryRepository(tokenManager: TokenManager): DeliveryRepository {
         val deliveryApiService = NetworkModule.createCourierDeliveryApiService(tokenManager)
         return DeliveryRepository(deliveryApiService)
+    }
+
+    /**
+     * Створює репозиторій для відгуків
+     */
+    fun createFeedbackRepository(tokenManager: TokenManager): FeedbackRepository {
+        val feedbackApiService = NetworkModule.createFeedbackApiService(tokenManager)
+        return FeedbackRepository(feedbackApiService)
     }
 }
 

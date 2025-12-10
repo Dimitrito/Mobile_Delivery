@@ -132,7 +132,7 @@ fun HomeScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search", color = GrayText) },
+                        placeholder = { Text("Пошук", color = GrayText) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -207,7 +207,7 @@ fun HomeScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "Popular",
+                        text = "Популярне",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = DarkText
@@ -245,9 +245,9 @@ fun HomeScreen(
                         ) {
                             Text(
                                 text = if (state.data.isEmpty())
-                                    "No dishes in this category"
+                                    "Немає страв у цій категорії"
                                 else
-                                    "No dishes found for \"$searchQuery\"",
+                                    "Не знайдено страв за запитом \"$searchQuery\"",
                                 color = GrayText
                             )
                         }
@@ -289,7 +289,7 @@ fun HomeScreen(
                             onClick = { categoriesViewModel.refreshDishes() },
                             colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent)
                         ) {
-                            Text("Try again")
+                            Text("Спробувати знову")
                         }
                     }
                 }
@@ -314,13 +314,13 @@ fun HomeScreen(
                             tint = OrangeAccent
                         )
                         Text(
-                            text = "Courier Mode",
+                            text = "Режим кур'єра",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = DarkText
                         )
                         Text(
-                            text = "Use the Orders tab to view your deliveries",
+                            text = "Використовуйте вкладку Замовлення для перегляду доставок",
                             fontSize = 16.sp,
                             color = GrayText,
                             textAlign = TextAlign.Center
@@ -530,7 +530,7 @@ private fun DishCard(
                             contentPadding = PaddingValues(vertical = 4.dp)
                         ) {
                             Text(
-                                text = "Add",
+                                text = "Додати",
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp
                             )
@@ -538,7 +538,7 @@ private fun DishCard(
                     }
                 } else {
                     Text(
-                        text = "Unavailable",
+                        text = "Недоступно",
                         color = GrayText,
                         fontSize = 12.sp,
                         modifier = Modifier.fillMaxWidth(),
@@ -582,7 +582,7 @@ private fun BottomNavigationBar(
                         contentDescription = "Menu"
                     )
                 },
-                label = { Text("Menu") },
+                label = { Text("Меню") },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = OrangeAccent,
                     selectedTextColor = OrangeAccent,
@@ -610,7 +610,7 @@ private fun BottomNavigationBar(
                     )
                 }
             },
-            label = { Text("Cart") },
+            label = { Text("Кошик") },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = OrangeAccent,
                 selectedTextColor = OrangeAccent
@@ -630,7 +630,7 @@ private fun BottomNavigationBar(
                         contentDescription = "Orders"
                     )
                 },
-                label = { Text("Orders") },
+                label = { Text("Замовлення") },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = OrangeAccent,
                     selectedTextColor = OrangeAccent
@@ -647,7 +647,7 @@ private fun BottomNavigationBar(
                     contentDescription = "Profile"
                 )
             },
-            label = { Text("Profile") },
+            label = { Text("Профіль") },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = OrangeAccent,
                 selectedTextColor = OrangeAccent

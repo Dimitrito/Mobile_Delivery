@@ -31,6 +31,7 @@ import com.mobiledelivery.presentation.screens.cart.CartScreen
 import com.mobiledelivery.presentation.screens.courier.CourierOrderDetailScreen
 import com.mobiledelivery.presentation.screens.courier.CourierOrdersScreen
 import com.mobiledelivery.presentation.screens.dishdetail.DishDetailScreen
+import com.mobiledelivery.presentation.screens.feedback.FeedbackScreen
 import com.mobiledelivery.presentation.screens.home.HomeScreen
 import com.mobiledelivery.presentation.screens.login.LoginScreen
 import com.mobiledelivery.presentation.screens.profile.ProfileScreen
@@ -40,6 +41,7 @@ import com.mobiledelivery.presentation.viewmodels.AuthViewModel
 import com.mobiledelivery.presentation.viewmodels.CartViewModel
 import com.mobiledelivery.presentation.viewmodels.CourierViewModel
 import com.mobiledelivery.presentation.viewmodels.CategoriesViewModel
+import com.mobiledelivery.presentation.viewmodels.FeedbackViewModel
 
 /**
  * Маршрути навігації
@@ -51,6 +53,7 @@ sealed class Screen(val route: String) {
     object Cart : Screen("cart")
     object Profile : Screen("profile")
     object CourierOrders : Screen("courier_orders")
+    object Feedback : Screen("feedback")
     
     object DishDetail : Screen("dish_detail/{dishId}") {
         fun createRoute(dishId: Int) = "dish_detail/$dishId"
@@ -105,6 +108,13 @@ fun AppNavigation(navController: NavHostController) {
             getCourierDeliveriesUseCase = UseCaseModule.createGetCourierDeliveriesUseCase(tokenManager),
             markDeliveryAsDeliveredUseCase = UseCaseModule.createMarkDeliveryAsDeliveredUseCase(tokenManager),
             getCourierByUserIdUseCase = UseCaseModule.createGetCourierByUserIdUseCase(tokenManager)
+        )
+    }
+
+    val feedbackViewModel = remember {
+        FeedbackViewModel(
+            getFeedbacksUseCase = UseCaseModule.createGetFeedbacksUseCase(tokenManager),
+            createFeedbackUseCase = UseCaseModule.createCreateFeedbackUseCase(tokenManager)
         )
     }
     
@@ -207,7 +217,20 @@ fun AppNavigation(navController: NavHostController) {
                 },
                 onNavigateToCourierOrders = {
                     navController.navigate(Screen.CourierOrders.route)
+                },
+                onNavigateToFeedback = {
+                    navController.navigate(Screen.Feedback.route)
                 }
+            )
+        }
+
+        composable(Screen.Feedback.route) {
+            val customerState by authViewModel.customerState.collectAsStateWithLifecycle()
+            val customerId = (customerState as? UiState.Success)?.data?.id
+            FeedbackScreen(
+                viewModel = feedbackViewModel,
+                customerId = customerId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         
