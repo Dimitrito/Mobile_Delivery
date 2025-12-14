@@ -70,3 +70,8 @@ Thumbs.db
 *.seed
 *.pid.lock
 backend/data/
+
+# Documentation files
+PAYPAL_SETUP.md
+PROJECT_STRUCTURE.md
+QUICK_FIX_PAYPAL.md
