@@ -36,6 +36,7 @@ import com.mobiledelivery.presentation.screens.home.HomeScreen
 import com.mobiledelivery.presentation.screens.login.LoginScreen
 import com.mobiledelivery.presentation.screens.profile.ProfileScreen
 import com.mobiledelivery.presentation.screens.register.RegisterScreen
+import com.mobiledelivery.presentation.screens.support.SupportScreen
 import com.mobiledelivery.presentation.states.UiState
 import com.mobiledelivery.presentation.viewmodels.AuthViewModel
 import com.mobiledelivery.presentation.viewmodels.CartViewModel
@@ -54,6 +55,7 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object CourierOrders : Screen("courier_orders")
     object Feedback : Screen("feedback")
+    object Support : Screen("support")
     
     object DishDetail : Screen("dish_detail/{dishId}") {
         fun createRoute(dishId: Int) = "dish_detail/$dishId"
@@ -187,6 +189,9 @@ fun AppNavigation(navController: NavHostController) {
                 onNavigateToDishDetail = { dishId ->
                     navController.navigate(Screen.DishDetail.createRoute(dishId))
                 },
+                onNavigateToSupport = {
+                    navController.navigate(Screen.Support.route)
+                },
                 currentRoute = currentRouteForHome
             )
         }
@@ -230,6 +235,12 @@ fun AppNavigation(navController: NavHostController) {
             FeedbackScreen(
                 viewModel = feedbackViewModel,
                 customerId = customerId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable(Screen.Support.route) {
+            SupportScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

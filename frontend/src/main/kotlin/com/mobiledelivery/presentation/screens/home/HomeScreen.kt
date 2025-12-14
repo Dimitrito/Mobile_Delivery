@@ -64,6 +64,7 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToCourierOrders: () -> Unit = {},
     onNavigateToDishDetail: (Int) -> Unit = {},
+    onNavigateToSupport: () -> Unit = {},
     currentRoute: String = "home"
 ) {
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
@@ -112,12 +113,30 @@ fun HomeScreen(
                     .background(CardBackground)
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                Text(
-                    text = "Mobile Delivery",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Mobile Delivery",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
+                    )
+                    
+                    IconButton(
+                        onClick = { onNavigateToSupport() },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Help,
+                            contentDescription = "Служба підтримки",
+                            tint = OrangeAccent,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             }
             
             // Показуємо меню тільки для не-кур'єрів
